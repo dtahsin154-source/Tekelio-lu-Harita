@@ -643,7 +643,8 @@ function afterLoad() {
 // ── Supabase banner ───────────────────────────────────────────────
 function updateBanner() {
   const b = document.getElementById('supa-banner');
-  if (!b) return;
+
+  if (!b) return;   // <-- bunu ekle
 
   if (supaReady) {
     b.style.display = 'none';
