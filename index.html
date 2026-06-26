@@ -643,13 +643,14 @@ function afterLoad() {
 // ── Supabase banner ───────────────────────────────────────────────
 function updateBanner() {
   const b = document.getElementById('supa-banner');
+  if (!b) return;
+
   if (supaReady) {
     b.style.display = 'none';
   } else {
     b.style.display = 'flex';
   }
 }
-
 // ── Aile select ───────────────────────────────────────────────────
 AILE_KOLLARI.forEach(a => {
   const o = document.createElement('option');
