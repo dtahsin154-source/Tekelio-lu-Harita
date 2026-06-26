@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Tekelioğulları — Aile Haritası</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0b0f1a;--bg2:#111827;--bg3:#1a2236;--card:#161d2e;
+  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.12);
+  --text:#e8edf5;--text2:#8899b4;--text3:#5a6a84;
+  --accent:#e55a2b;--accent2:#ff7a4d;--gold:#d4a843;--blue:#3b82f6;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;font-size:15px;line-height:1.6;min-height:100vh}
+::-webkit-scrollbar{width:5px}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+
+/* NAV */
+#nav{position:fixed;top:0;left:0;right:0;z-index:1000;display:flex;align-items:center;justify-content:space-between;padding:0 28px;height:60px;background:rgba(11,15,26,0.96);backdrop-filter:blur(16px);border-bottom:0.5px solid var(--border)}
+#nav-logo{display:flex;align-items:center;gap:8px;font-size:18px;font-weight:800;letter-spacing:-.02em;cursor:pointer}
+#nav-logo .dot{width:9px;height:9px;border-radius:50%;background:var(--accent)}
+#nav-logo em{color:var(--accent);font-style:normal}
+#nav-r{display:flex;align-items:center;gap:6px}
+.nvb{padding:6px 13px;border-radius:8px;font-size:14px;font-weight:500;color:var(--text2);cursor:pointer;background:none;border:none;transition:all .15s}
+.nvb:hover{background:var(--bg3);color:var(--text)}
+
+#btn-reg{padding:7px 16px;border-radius:8px;font-size:14px;font-weight:700;border:none;background:var(--accent);color:#fff;cursor:pointer;transition:all .15s;margin-left:4px}
+#btn-reg:hover{background:var(--accent2)}
+
+/* SUPABASE BANNER */
+#supa-banner{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:12px 20px;background:rgba(251,191,36,0.1);border-bottom:1px solid rgba(251,191,36,0.25);font-size:13px;color:#fbbf24;flex-wrap:wrap}
+#supa-banner a{color:#fbbf24;text-decoration:underline;font-weight:600}
+#supa-banner .sb-close{background:none;border:none;color:#fbbf24;cursor:pointer;font-size:16px;padding:0 4px;margin-left:auto}
+
+/* LOADING */
+#loading-overlay{display:none;position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,0.6);backdrop-filter:blur(3px);align-items:center;justify-content:center;flex-direction:column;gap:14px}
+.loader{width:40px;height:40px;border:3px solid rgba(255,255,255,.1);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loader-txt{font-size:14px;color:var(--text2)}
+
+/* HERO */
+#hero{padding:80px 20px 40px;display:flex;align-items:center;justify-content:center;flex-direction:column;text-align:center;background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(229,90,43,.14) 0%,transparent 70%);border-bottom:0.5px solid var(--border)}
+#hero h1{font-size:clamp(28px,5vw,54px);font-weight:800;letter-spacing:-.03em;line-height:1.1}
+#hero h1 em{color:var(--accent);font-style:normal}
+#hero p{margin-top:12px;font-size:16px;color:var(--text2);max-width:480px;line-height:1.65}
+#hero-stats{display:flex;gap:40px;margin-top:28px}
+.hstat{text-align:center}
+.hstat-n{font-size:28px;font-weight:800;letter-spacing:-.02em}
+.hstat-l{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-top:2px}
+#gsw{position:relative;max-width:420px;width:100%;margin-top:22px}
+#gs{width:100%;padding:12px 18px 12px 44px;background:rgba(255,255,255,.05);border:0.5px solid var(--border2);border-radius:40px;color:var(--text);font-size:15px;outline:none;transition:all .15s}
+#gs:focus{border-color:var(--accent);background:rgba(255,255,255,.07)}
+.gs-ico{position:absolute;left:15px;top:50%;transform:translateY(-50%);font-size:17px;color:var(--text3);pointer-events:none}
+#gsr{position:absolute;top:52px;left:0;right:0;background:var(--bg2);border:0.5px solid var(--border2);border-radius:14px;z-index:100;max-height:280px;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,.55);display:none}
+.gsri{display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;border-bottom:0.5px solid var(--border);transition:background .12s}
+.gsri:hover{background:var(--bg3)}
+.gsri:last-child{border-bottom:none}
+
+/* MAIN */
+#main-wrap{display:flex;gap:22px;max-width:1400px;margin:0 auto;padding:28px 18px}
+#map-sec{flex:1;min-width:0}
+#map-card{background:var(--card);border:0.5px solid var(--border);border-radius:20px;overflow:hidden;box-shadow:0 4px 28px rgba(0,0,0,.5)}
+#map-topbar{padding:14px 18px;border-bottom:0.5px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+#map-topbar h2{font-size:16px;font-weight:700}
+#map-topbar p{font-size:12px;color:var(--text2);margin-top:2px}
+#map-refresh{background:none;border:none;cursor:pointer;font-size:18px;color:var(--text2);padding:4px 8px;border-radius:6px;transition:all .15s}
+#map-refresh:hover{background:var(--bg3);color:var(--text)}
+#sel-bar{display:flex;align-items:center;justify-content:space-between;padding:9px 16px;background:var(--bg3);border-bottom:0.5px solid var(--border);font-size:13px;color:var(--text2);min-height:40px}
+#clr-btn{background:none;border:none;color:var(--text3);font-size:16px;cursor:pointer;padding:2px 8px;display:none;border-radius:6px;transition:all .15s}
+#clr-btn:hover{background:var(--border2);color:var(--text)}
+#map-inner{padding:16px;background:linear-gradient(160deg,#0c1220 0%,#0e1828 100%)}
+#map-svg{width:100%;height:auto;display:block}
+.il{fill:#1e3050;stroke:#2d4a70;stroke-width:0.6;cursor:pointer;transition:fill .18s}
+.il:hover{fill:#2a5090;stroke:#5080c0}
+.il.has-member{fill:#1a4a8a;stroke:#3a6ac0;stroke-width:0.8}
+.il.has-member:hover{fill:#2060b0}
+.il.selected{fill:var(--accent)!important;stroke:var(--accent2)!important;stroke-width:1.5!important;filter:drop-shadow(0 0 8px rgba(229,90,43,.6))}
+.il-lbl{font-size:5px;fill:rgba(255,255,255,.5);pointer-events:none;text-anchor:middle;font-family:system-ui,sans-serif;font-weight:500}
+#map-legend{display:flex;align-items:center;gap:18px;padding:10px 16px;border-top:0.5px solid var(--border);font-size:12px;color:var(--text2)}
+.leg{display:flex;align-items:center;gap:6px}
+.leg-d{width:13px;height:13px;border-radius:3px;flex-shrink:0}
+
+/* TOOLTIP */
+#tip{position:fixed;background:rgba(8,14,28,.95);color:#e8edf5;padding:7px 13px;border-radius:10px;font-size:13px;font-weight:600;pointer-events:none;display:none;border:0.5px solid rgba(255,255,255,.14);z-index:5000;box-shadow:0 4px 20px rgba(0,0,0,.5);white-space:nowrap}
+#tip .tc{color:var(--accent);margin-left:8px;font-weight:700}
+
+/* SIDEBAR */
+#sidebar{width:330px;flex-shrink:0;display:flex;flex-direction:column;gap:16px}
+#il-card{background:var(--card);border:0.5px solid var(--border);border-radius:20px;padding:18px;box-shadow:0 4px 24px rgba(0,0,0,.4)}
+#il-card h3{font-size:22px;font-weight:800;letter-spacing:-.02em}
+.il-sub{font-size:13px;color:var(--text2);margin-top:3px}
+.il-stats{display:flex;gap:10px;margin-top:14px}
+.il-st{flex:1;background:var(--bg3);border-radius:10px;padding:12px;text-align:center}
+.il-st-n{font-size:20px;font-weight:800}
+.il-st-l{font-size:10px;color:var(--text3);margin-top:2px;text-transform:uppercase;letter-spacing:.05em}
+#mc{background:var(--card);border:0.5px solid var(--border);border-radius:20px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.4);display:flex;flex-direction:column}
+#mc-head{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:0.5px solid var(--border)}
+#mc-head h3{font-size:15px;font-weight:700}
+#mc-badge{padding:2px 9px;border-radius:20px;background:var(--bg3);color:var(--text2);font-size:12px;font-weight:600}
+#mc-sw{position:relative;padding:10px 14px;border-bottom:0.5px solid var(--border)}
+#mc-s{width:100%;padding:7px 10px 7px 32px;background:var(--bg3);border:0.5px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;outline:none;transition:border-color .15s}
+#mc-s:focus{border-color:var(--blue)}
+.ms-i{position:absolute;left:22px;top:50%;transform:translateY(-50%);font-size:13px;color:var(--text3);pointer-events:none}
+#mc-list{max-height:500px;overflow-y:auto}
+.mi{display:flex;align-items:center;gap:11px;padding:11px 16px;border-bottom:0.5px solid var(--border);cursor:pointer;transition:background .12s}
+.mi:hover{background:var(--bg3)}
+.mi:last-child{border-bottom:none}
+.mav{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;flex-shrink:0;overflow:hidden}
+.mav img{width:40px;height:40px;object-fit:cover;border-radius:50%}
+.mname{font-size:14px;font-weight:600}
+.msub{font-size:12px;color:var(--text2);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:170px}
+.mbadge{margin-left:auto;flex-shrink:0;padding:2px 7px;border-radius:20px;font-size:10px;font-weight:700}
+#es{padding:36px 18px;text-align:center;color:var(--text3);font-size:14px;line-height:1.9}
+.es-i{font-size:32px;margin-bottom:10px}
+
+/* MODALS */
+.mo{display:none;position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,.75);backdrop-filter:blur(6px);align-items:center;justify-content:center;padding:16px}
+.mo.open{display:flex}
+.mb{background:var(--bg2);border:0.5px solid var(--border2);border-radius:20px;width:100%;max-width:540px;max-height:93vh;overflow-y:auto;box-shadow:0 16px 60px rgba(0,0,0,.65);animation:mIn .2s ease}
+@keyframes mIn{from{opacity:0;transform:scale(.95) translateY(8px)}to{opacity:1;transform:none}}
+.mh{padding:22px 24px 0;display:flex;align-items:flex-start;justify-content:space-between}
+.mh h2{font-size:19px;font-weight:800;letter-spacing:-.01em}
+.mh p{font-size:13px;color:var(--text2);margin-top:4px}
+.mcls{background:var(--bg3);border:none;color:var(--text2);width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:17px;cursor:pointer;flex-shrink:0;margin-left:12px;transition:all .15s;font-family:inherit}
+.mcls:hover{background:var(--border2);color:var(--text)}
+.mbody{padding:18px 24px 24px}
+.fg{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.fg1{grid-template-columns:1fr}
+.fld{display:flex;flex-direction:column;gap:5px}
+.fld.s2{grid-column:span 2}
+.fld label{font-size:11px;font-weight:700;color:var(--text2);letter-spacing:.04em;text-transform:uppercase}
+.fld input,.fld select,.fld textarea{padding:9px 11px;border-radius:8px;border:0.5px solid var(--border2);background:var(--bg3);color:var(--text);font-size:14px;outline:none;transition:border-color .15s,box-shadow .15s;font-family:inherit}
+.fld input:focus,.fld select:focus,.fld textarea:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(59,130,246,.1)}
+.fld select option{background:var(--bg2)}
+.fld textarea{resize:vertical;min-height:72px}
+.fdiv{border:none;border-top:0.5px solid var(--border);margin:16px 0}
+.ftit{font-size:12px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:11px}
+.mfoot{display:flex;gap:10px;margin-top:18px}
+.bno{flex:1;padding:10px;border-radius:8px;border:0.5px solid var(--border2);background:transparent;color:var(--text2);font-size:14px;font-weight:600;cursor:pointer;transition:all .15s;font-family:inherit}
+.bno:hover{background:var(--bg3);color:var(--text)}
+.bok{flex:2;padding:10px;border-radius:8px;border:none;background:var(--accent);color:#fff;font-size:14px;font-weight:700;cursor:pointer;transition:all .15s;font-family:inherit}
+.bok:hover{background:var(--accent2)}
+.puw{display:flex;align-items:center;gap:12px;margin-top:4px}
+.pph{width:54px;height:54px;border-radius:50%;background:var(--bg3);border:1.5px dashed var(--border2);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+#photo-prev{width:54px;height:54px;border-radius:50%;object-fit:cover;display:none;border:2px solid var(--accent);flex-shrink:0}
+
+/* PROFİL */
+#pm .mb{max-width:430px;position:relative}
+#pmh{padding:26px 26px 0;display:flex;gap:15px;align-items:flex-start}
+#pmav{width:70px;height:70px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:800;flex-shrink:0;overflow:hidden}
+#pmav img{width:70px;height:70px;object-fit:cover;border-radius:50%}
+#pmi h3{font-size:19px;font-weight:800;letter-spacing:-.01em}
+#pmi .pmsub{font-size:13px;color:var(--text2);margin-top:2px}
+#pmbadge{display:inline-block;margin-top:6px;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:700}
+#pmb{padding:18px 26px 26px}
+.pmr{display:flex;align-items:flex-start;gap:12px;padding:10px 0;border-bottom:0.5px solid var(--border)}
+.pmr:last-child{border-bottom:none}
+.pmic{font-size:16px;flex-shrink:0;margin-top:1px}
+.pml{font-size:10px;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:.05em}
+.pmv{font-size:14px;color:var(--text);margin-top:2px}
+#pm .mcls{position:absolute;top:14px;right:14px}
+
+/* SETUP MODAL */
+#setup .mb{max-width:580px}
+.setup-step{background:var(--bg3);border-radius:12px;padding:16px;margin-bottom:12px;border:0.5px solid var(--border)}
+.setup-step-n{font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}
+.setup-step h4{font-size:15px;font-weight:700;margin-bottom:6px}
+.setup-step p{font-size:13px;color:var(--text2);line-height:1.6}
+.code-block{background:#0d1520;border:0.5px solid var(--border2);border-radius:8px;padding:12px 14px;font-family:'Courier New',monospace;font-size:12px;color:#93c5fd;margin-top:8px;overflow-x:auto;line-height:1.7}
+.fld.inline-btn{flex-direction:row;align-items:flex-end;gap:8px}
+.fld.inline-btn input{flex:1}
+.fld.inline-btn button{padding:9px 14px;border-radius:8px;border:none;background:var(--accent);color:#fff;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;transition:background .15s;font-family:inherit}
+.fld.inline-btn button:hover{background:var(--accent2)}
+
+/* TOAST */
+#toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%);background:var(--bg2);border:0.5px solid var(--border2);border-radius:12px;padding:11px 20px;font-size:14px;font-weight:500;box-shadow:0 8px 40px rgba(0,0,0,.5);z-index:9999;opacity:0;pointer-events:none;transition:opacity .3s;display:flex;align-items:center;gap:9px;white-space:nowrap}
+#toast.show{opacity:1}
+footer{text-align:center;padding:28px 20px;border-top:0.5px solid var(--border);color:var(--text3);font-size:13px;margin-top:32px}
+@media(max-width:900px){#main-wrap{flex-direction:column;padding:14px}#sidebar{width:100%}.fg{grid-template-columns:1fr}.fld.s2{grid-column:span 1}#nav{padding:0 14px}#hero-stats{gap:24px}.fg.inline-btn{flex-direction:column}}
+</style>
+</head>
+<body>
+
+<!-- Loading -->
+<div id="loading-overlay">
+  <div class="loader"></div>
+  <div class="loader-txt">Yükleniyor...</div>
+</div>
+
+<!-- Nav -->
+<nav id="nav">
+  <div id="nav-logo" onclick="window.scrollTo({top:0,behavior:'smooth'})">
+    <div class="dot"></div>Tekeli<em>oğulları</em>
+  </div>
+  <div id="nav-r">
+    <button class="nvb" onclick="document.getElementById('main-wrap').scrollIntoView({behavior:'smooth'})">Harita</button>
+    <button id="btn-reg" onclick="openM('rm')">+ Üye Ol</button>
+  </div>
+</nav>
+
+
+<!-- Hero -->
+<section id="hero">
+  <h1>Tekelioğulları<br><em>Aile Haritası</em></h1>
+  <p>Türkiye haritasında bir ile tıkla, o ilde yaşayan aile üyelerini gör.</p>
+  <div id="gsw">
+    <span class="gs-ico">🔍</span>
+    <input id="gs" type="text" placeholder="Üye, il veya aile ara..." autocomplete="off"/>
+    <div id="gsr"></div>
+  </div>
+  <div id="hero-stats">
+    <div class="hstat"><div class="hstat-n" id="st-u">0</div><div class="hstat-l">Toplam Üye</div></div>
+    <div class="hstat"><div class="hstat-n" id="st-i">0</div><div class="hstat-l">Aktif İl</div></div>
+    <div class="hstat"><div class="hstat-n" id="st-a">0</div><div class="hstat-l">Aile Kolu</div></div>
+  </div>
+</section>
+
+<!-- Main -->
+<div id="main-wrap">
+  <section id="map-sec">
+    <div id="map-card">
+      <div id="map-topbar">
+        <div><h2>Türkiye Haritası</h2><p>Bir ile tıklayarak o ildeki üyeleri listele</p></div>
+        <button id="map-refresh" onclick="loadMembers()" title="Yenile">↻</button>
+      </div>
+      <div id="sel-bar"><span id="sel-txt">Haritadan bir il seçin</span><button id="clr-btn" onclick="clearSel()">✕</button></div>
+      <div id="map-inner">
+        <svg id="map-svg" viewBox="0 0 900 460" xmlns="http://www.w3.org/2000/svg">
+<path class="il" data-il="Adana" d="M502.4,305.6L501.9,311.5L503.9,316.8L501.1,323.7L494.3,324.7L488.7,329.1L481.7,343.5L481.6,351.2L482.7,353.4L480.3,358.8L487.2,355.7L488.6,356.7L490.0,360.1L489.0,365.7L484.7,370.2L483.1,373.8L484.1,375.4L479.8,381.0L477.6,383.0L471.7,382.9L468.7,385.6L468.5,387.4L466.8,386.5L467.8,388.7L469.7,385.1L471.1,384.7L470.7,386.8L471.2,385.4L471.1,386.8L474.3,386.5L470.7,389.5L469.6,393.7L467.0,396.3L460.1,394.7L456.4,398.1L455.7,395.8L456.8,393.8L453.0,391.4L452.4,388.8L449.1,387.8L448.3,389.0L455.8,396.7L440.6,386.5L436.8,385.7L442.3,382.6L443.9,377.2L443.3,369.3L440.8,364.6L437.3,361.4L430.8,342.0L430.9,336.2L434.3,332.2L432.2,323.2L432.7,321.4L434.7,319.7L441.9,320.5L444.5,319.2L450.6,311.5L450.4,306.0L451.9,303.3L461.9,305.6L469.5,303.1L472.3,296.1L487.7,287.6L494.6,272.1L504.6,268.5L506.7,270.1L509.9,278.7L506.9,283.0L502.7,300.4L502.4,305.6Z"/>
+<path class="il" data-il="Adıyaman" d="M610.3,293.9L626.5,292.2L631.5,287.6L635.8,287.2L637.7,288.9L636.0,296.6L629.7,300.7L625.9,306.0L624.1,317.1L618.4,320.9L618.4,324.3L608.5,328.6L602.1,334.6L595.2,334.9L587.2,340.1L582.7,338.5L579.1,334.1L570.4,330.9L562.4,333.1L552.8,326.0L553.1,320.2L561.1,312.0L567.7,311.4L572.3,308.1L579.0,309.5L588.3,305.6L586.2,294.1L598.4,286.6L604.8,284.5L609.3,286.7L606.0,291.7L610.3,293.9Z"/>
+<path class="il" data-il="Afyon" d="M272.0,220.7L273.1,223.9L276.5,226.0L287.5,225.6L288.0,235.2L282.5,250.8L283.5,254.3L286.7,257.2L267.3,271.1L264.9,270.3L261.0,265.3L259.3,265.4L245.9,280.5L232.8,287.5L221.1,299.1L217.2,306.8L218.0,310.3L213.0,315.2L207.2,314.7L201.6,316.3L200.2,312.4L193.2,310.1L193.3,300.9L205.3,293.1L209.7,288.2L210.7,285.1L205.2,272.1L197.4,269.3L198.2,265.8L202.9,256.4L203.9,251.9L214.1,244.3L221.3,226.0L226.6,223.3L229.8,217.9L232.2,219.0L234.0,223.0L238.4,226.7L244.3,223.2L245.9,220.2L249.9,217.4L254.7,221.1L266.4,212.5L269.3,213.2L272.0,220.7Z"/>
+<path class="il" data-il="Ağrı" d="M830.2,168.1L830.1,177.2L833.0,179.1L836.5,175.4L840.7,175.3L846.2,176.8L858.2,184.8L865.7,184.1L872.2,185.8L881.3,184.0L881.0,188.6L878.5,193.4L878.7,202.0L877.9,203.8L872.2,206.5L868.7,203.8L865.3,206.1L864.9,204.5L861.5,204.1L860.6,207.2L845.1,206.5L841.8,211.2L839.4,212.2L834.8,209.5L831.6,205.3L825.5,204.3L820.7,209.4L815.5,210.9L819.6,215.7L818.8,222.5L800.3,229.5L799.3,221.1L796.6,214.9L789.4,206.2L787.1,200.1L789.8,192.8L788.9,181.7L787.5,179.2L778.7,175.8L777.3,172.6L778.3,171.1L784.3,171.7L791.7,166.6L798.4,168.6L816.6,162.3L829.2,165.7L830.2,168.1Z"/>
+<path class="il" data-il="Aksaray" d="M403.9,242.9L406.5,246.1L403.9,254.1L407.0,258.0L410.5,268.0L412.6,270.4L411.2,280.4L412.6,283.7L412.4,289.2L409.6,291.0L406.8,296.4L403.0,295.4L400.2,299.2L384.0,303.1L370.9,304.7L367.1,303.5L359.1,285.6L365.6,261.9L369.5,256.9L379.6,251.8L386.2,251.5L390.8,247.0L391.9,243.7L389.1,235.2L390.9,231.5L397.9,238.6L402.5,240.1L403.9,242.9Z"/>
+<path class="il" data-il="Amasya" d="M473.3,101.4L485.0,101.6L489.9,103.8L495.5,99.5L496.6,94.2L499.2,94.2L504.4,96.2L504.6,99.3L507.9,102.0L506.4,105.3L509.0,113.4L507.6,118.7L502.2,126.3L496.5,130.8L492.2,131.8L485.2,127.8L479.9,127.9L473.9,140.1L467.5,143.8L464.5,149.7L458.0,149.3L456.1,146.9L456.7,137.9L461.5,130.2L462.3,122.8L460.6,119.9L452.6,116.3L447.7,116.0L444.5,113.0L441.9,103.8L442.9,103.2L443.0,96.2L445.0,90.5L445.0,86.4L463.2,91.9L473.3,101.4Z"/>
+<path class="il" data-il="Ankara" d="M356.7,134.0L358.2,138.4L360.3,139.8L363.3,139.5L364.8,136.0L367.0,135.8L381.8,143.5L378.2,148.8L374.7,159.6L376.6,165.2L376.5,169.0L364.5,180.2L361.2,200.2L358.8,206.1L361.2,209.3L365.1,210.2L366.0,212.9L364.9,216.5L367.3,220.9L372.4,214.5L375.7,220.2L391.7,229.5L389.1,235.2L391.9,244.9L386.4,251.5L379.6,251.8L369.5,256.9L364.7,246.3L365.3,229.4L356.7,213.0L353.3,216.8L350.5,217.0L348.9,221.1L346.2,223.3L340.3,221.5L334.1,229.8L327.3,228.6L323.3,232.4L315.2,227.3L307.6,229.9L305.4,229.1L296.1,220.1L301.2,216.4L302.1,205.7L301.2,197.3L294.5,181.6L294.5,179.0L296.3,176.2L294.9,171.6L292.1,171.0L287.4,163.7L283.8,161.8L263.3,159.8L252.6,161.4L249.3,153.1L253.1,147.4L257.4,143.9L256.9,136.6L258.0,133.9L267.4,138.7L281.5,141.4L287.9,138.9L297.1,138.8L308.3,133.3L318.8,133.9L323.6,125.9L321.5,117.3L324.8,113.6L331.9,113.7L345.9,121.1L356.7,134.0Z"/>
+<path class="il" data-il="Antalya" d="M189.9,422.7L190.5,424.2L188.3,425.7L189.9,422.7Z M276.0,344.3L288.9,345.4L294.4,348.1L312.4,367.3L315.0,377.3L321.3,379.3L323.4,384.0L322.7,389.1L324.9,396.6L332.1,404.2L331.0,408.4L331.5,415.0L328.5,426.4L326.4,427.6L324.2,426.5L315.3,418.2L309.2,406.1L302.9,398.1L300.9,398.8L300.1,396.9L291.1,393.7L289.8,391.5L286.3,391.1L281.2,386.6L273.1,383.1L270.4,380.1L255.5,376.8L243.9,377.7L241.2,375.1L237.6,377.3L235.4,381.0L234.5,390.9L236.2,394.7L230.9,407.4L233.3,411.6L230.4,412.9L231.4,415.3L227.6,419.9L227.7,415.5L218.1,412.9L215.7,413.8L215.8,415.7L214.2,417.4L211.6,416.6L207.9,419.6L205.2,418.3L203.5,420.9L200.8,421.2L201.8,421.0L199.1,424.3L195.9,422.9L194.0,425.1L193.8,423.6L191.6,422.5L192.5,422.3L192.3,420.8L189.5,421.4L191.6,420.1L182.9,419.8L183.5,418.8L181.5,418.9L181.7,416.5L180.6,416.3L178.8,418.5L174.3,413.9L176.2,412.6L177.5,404.5L189.0,393.0L190.4,382.1L194.1,372.8L197.3,371.7L199.9,368.0L201.7,359.2L205.1,354.8L223.4,346.8L225.5,347.3L227.0,351.1L229.4,352.4L246.1,352.3L249.7,343.1L252.2,342.3L255.0,344.4L266.2,339.1L270.2,338.9L272.5,342.6L276.0,344.3Z"/>
+<path class="il" data-il="Ardahan" d="M800.9,51.3L804.3,51.4L802.3,56.1L803.0,57.8L805.0,59.3L807.0,57.1L813.0,66.0L821.2,71.5L817.6,74.8L820.8,74.9L822.4,80.3L824.9,79.9L824.0,86.4L822.3,90.6L819.9,92.6L807.9,97.9L804.2,113.0L793.8,118.1L790.9,118.1L783.0,104.5L780.9,98.1L780.8,94.0L783.9,86.7L791.3,79.6L792.5,76.8L787.4,61.6L789.6,61.6L789.4,58.8L791.9,56.5L793.4,51.3L800.9,51.3Z"/>
+<path class="il" data-il="Artvin" d="M746.4,56.4L749.5,58.5L752.0,57.5L752.3,59.1L757.3,62.0L763.4,55.6L767.7,57.7L774.0,56.3L774.9,57.8L784.4,59.7L787.4,61.6L792.5,76.8L791.3,79.6L783.9,86.7L780.8,94.0L770.1,95.3L766.1,97.7L761.0,118.1L757.3,119.7L749.1,116.6L739.0,123.5L735.9,122.4L734.8,117.4L737.5,110.8L737.0,108.8L728.3,108.3L724.7,106.3L738.7,86.2L733.3,81.8L728.9,71.3L731.7,68.3L738.1,65.4L744.5,55.4L746.4,56.4Z"/>
+<path class="il" data-il="Aydın" d="M153.8,297.7L156.3,301.3L152.8,306.5L151.4,310.8L155.4,316.2L156.7,321.0L150.3,327.1L144.5,326.4L142.6,327.7L141.8,330.9L144.0,335.4L137.4,334.1L129.6,328.0L126.2,329.7L122.9,335.6L110.6,336.8L102.0,334.1L93.1,328.9L90.2,333.5L88.8,339.5L86.7,340.6L86.3,342.5L84.9,342.0L84.9,344.4L82.8,343.5L81.4,344.9L78.5,343.7L80.3,340.2L80.1,335.7L80.0,334.7L78.0,335.6L78.9,332.8L78.6,331.7L77.9,335.0L78.5,330.8L77.4,331.4L77.0,328.1L77.7,330.7L79.7,327.8L69.7,323.2L71.0,321.1L74.2,321.7L80.2,319.0L82.0,314.6L82.0,312.6L80.5,311.0L81.9,307.5L90.1,305.8L93.9,301.3L105.6,302.0L112.4,300.5L113.1,298.9L127.5,298.9L142.9,292.7L148.3,292.6L149.4,293.4L149.0,294.9L153.8,297.7Z"/>
+<path class="il" data-il="Balıkesir" d="M51.0,211.1L51.2,212.5L50.0,213.0L51.0,211.1Z M51.7,204.8L54.3,205.2L52.1,206.5L55.2,209.1L52.1,209.6L51.8,205.8L51.0,205.5L51.7,204.8Z M98.4,127.2L99.8,128.4L98.9,129.9L99.7,131.3L96.4,130.6L98.4,127.2Z M104.6,126.0L106.0,127.6L110.0,126.8L117.5,129.3L116.3,132.2L111.2,135.6L113.9,138.3L126.0,135.1L122.4,141.0L121.7,148.3L122.4,157.4L125.8,160.7L130.0,172.0L140.2,179.1L147.1,179.9L152.5,189.0L159.9,190.3L160.7,191.4L157.0,206.8L152.8,212.5L146.7,215.9L146.7,220.8L143.9,219.6L123.7,229.1L121.2,227.7L118.6,220.2L115.8,216.9L111.1,215.8L110.5,213.5L112.1,209.4L111.2,207.4L101.1,208.2L93.5,203.5L88.5,205.8L77.8,203.0L67.6,214.2L59.6,220.2L57.5,218.2L56.5,214.2L51.5,213.3L53.4,209.8L53.7,211.1L52.4,211.6L54.3,212.8L54.0,211.0L60.6,205.0L60.2,202.3L62.9,201.7L63.0,199.1L66.4,198.6L67.4,194.0L66.0,191.8L64.1,191.7L62.1,193.6L54.0,193.5L55.2,183.9L57.4,182.4L62.4,183.0L68.7,178.0L73.8,176.1L81.8,178.8L89.2,174.7L92.4,167.1L90.5,163.6L93.1,154.5L91.5,148.9L96.3,144.0L96.8,140.7L104.9,141.5L110.4,136.8L107.8,135.0L106.5,136.1L104.2,132.8L104.5,131.5L101.4,129.9L101.4,127.7L104.6,126.0Z M93.6,125.3L95.2,126.5L93.9,127.9L94.5,128.8L92.3,130.2L91.8,128.4L93.6,125.3Z M99.1,116.2L104.1,118.7L97.8,122.8L94.1,121.2L94.3,117.7L99.1,116.2Z"/>
+<path class="il" data-il="Bartın" d="M333.3,33.4L339.9,50.5L344.5,53.5L339.7,56.4L338.2,55.5L333.9,59.9L330.9,67.6L321.4,74.8L318.0,75.9L315.7,71.1L302.7,53.8L302.9,52.0L308.5,49.7L314.7,41.7L317.3,41.4L319.3,39.2L320.8,40.2L324.7,35.8L328.5,33.9L333.3,33.4Z"/>
+<path class="il" data-il="Batman" d="M746.2,263.3L748.4,265.7L749.7,271.2L750.5,286.1L747.2,297.5L741.4,298.7L741.4,301.1L738.2,305.8L743.1,309.7L753.0,309.9L753.3,311.9L751.6,315.2L754.1,317.5L758.0,316.1L759.6,317.7L750.9,322.0L745.7,328.7L739.8,330.2L727.8,330.1L721.5,319.2L724.3,313.3L721.5,312.0L720.6,309.6L724.0,305.8L728.9,293.0L729.9,273.6L731.2,270.5L738.6,267.8L739.0,264.1L746.2,263.3Z"/>
+<path class="il" data-il="Bayburt" d="M696.0,126.2L698.8,141.9L702.0,145.7L709.2,147.0L709.7,148.7L708.1,152.2L694.8,161.2L677.8,158.0L667.1,162.3L662.7,167.7L659.0,164.6L658.3,161.9L664.2,152.4L665.9,140.2L672.1,137.2L674.8,133.6L677.0,127.1L682.4,128.0L696.0,126.2Z"/>
+<path class="il" data-il="Bilecik" d="M215.2,137.2L222.9,134.8L230.4,135.7L237.7,139.5L242.5,150.9L235.3,152.7L233.0,162.4L230.3,166.3L225.3,167.3L220.3,173.0L214.5,172.1L211.5,173.8L208.7,178.8L208.9,181.7L210.8,184.2L206.5,185.0L195.9,180.9L193.8,169.5L198.1,169.4L199.0,165.2L195.9,162.8L194.3,158.5L196.3,149.6L200.9,143.0L199.7,134.3L201.3,129.9L206.0,125.8L207.9,130.4L215.2,137.2Z"/>
+<path class="il" data-il="Bingöl" d="M716.4,196.6L720.4,199.9L725.2,200.4L729.2,207.6L727.0,212.1L728.6,220.8L731.8,224.4L731.8,230.0L726.3,238.5L731.4,250.8L714.9,259.9L697.1,258.5L693.3,267.7L686.2,267.9L686.5,262.8L683.8,258.8L683.9,256.2L686.0,250.7L689.2,250.8L690.6,245.3L689.1,241.5L687.5,240.9L686.0,235.8L685.9,229.2L691.1,221.3L690.7,218.6L689.1,216.5L673.1,225.8L674.6,222.4L674.1,218.3L675.7,213.6L677.3,210.4L682.1,212.1L690.8,205.7L688.2,202.6L696.6,197.3L697.9,194.3L704.4,196.8L712.7,193.0L716.4,196.6Z"/>
+<path class="il" data-il="Bitlis" d="M818.2,237.0L821.0,240.2L820.1,245.9L814.5,251.0L806.7,264.5L797.4,271.4L799.8,281.4L798.8,286.2L802.5,288.7L801.5,291.5L804.2,295.7L799.8,299.2L775.1,285.4L769.9,286.5L766.7,291.4L764.5,289.6L761.6,290.1L750.4,286.9L750.6,275.8L748.5,265.8L746.6,263.5L743.3,263.3L747.9,259.4L759.1,260.0L762.7,258.1L768.1,252.9L765.6,244.7L771.8,244.1L772.0,240.9L779.9,236.4L801.1,236.1L800.3,229.5L803.9,227.5L812.9,225.5L812.1,233.0L818.2,237.0Z"/>
+<path class="il" data-il="Bolu" d="M297.5,91.4L314.8,92.2L314.6,96.9L325.1,102.5L326.6,106.3L325.7,111.9L321.5,117.3L323.6,125.9L319.5,133.3L308.3,133.3L297.1,138.8L287.9,138.9L281.5,141.4L267.4,138.7L258.0,133.9L256.9,136.6L257.4,143.9L253.1,147.4L249.3,153.1L242.5,150.9L238.3,141.4L237.7,139.5L238.8,136.0L236.4,131.9L240.1,126.7L251.0,125.3L252.7,122.9L253.0,115.2L256.4,116.8L264.0,115.2L267.4,117.7L271.9,116.6L275.0,113.8L275.2,106.5L276.9,101.9L283.2,101.2L287.2,98.8L290.3,93.6L289.3,89.8L297.5,91.4Z"/>
+<path class="il" data-il="Burdur" d="M233.8,320.2L241.4,321.9L244.3,332.1L250.9,340.7L251.3,342.4L249.1,343.7L246.1,352.3L229.4,352.4L227.0,351.1L225.3,347.1L222.1,346.9L211.0,351.5L203.1,356.6L200.6,366.4L196.6,372.2L194.1,372.8L191.3,367.5L187.7,365.5L180.7,370.6L180.7,357.2L189.2,339.9L189.3,338.2L187.0,336.4L186.8,327.7L202.5,315.7L208.5,314.9L210.3,319.1L212.5,320.2L224.0,311.0L233.8,320.2Z"/>
+<path class="il" data-il="Bursa" d="M141.0,123.3L141.7,123.4L141.3,126.1L140.3,127.2L140.0,123.4L141.0,123.3Z M205.5,123.9L206.0,125.8L202.1,128.7L199.9,133.2L199.8,138.8L201.0,142.7L196.3,149.6L194.3,158.5L195.9,162.8L199.0,165.2L198.7,168.5L190.9,170.5L183.3,168.2L181.5,169.2L174.8,184.2L172.7,193.8L166.7,194.6L162.3,193.0L158.2,189.1L153.5,189.5L147.1,179.9L140.2,179.1L130.0,172.0L125.8,160.7L122.4,157.4L121.7,155.0L122.5,140.6L126.0,135.1L139.7,135.3L138.4,137.6L139.9,135.3L146.2,137.8L152.9,135.4L161.4,138.1L164.9,137.6L166.4,133.7L169.5,133.2L166.6,129.8L162.9,128.2L164.5,123.8L174.8,124.0L179.2,122.4L188.6,124.1L198.9,120.0L205.3,122.5L205.5,123.9Z"/>
+<path class="il" data-il="Çanakkale" d="M25.7,173.5L27.1,176.7L26.1,177.7L21.4,174.2L25.7,173.5Z M20.6,146.1L22.1,147.8L21.6,152.4L23.8,151.5L22.9,153.7L11.1,156.6L7.7,154.2L7.9,152.2L13.2,148.2L20.6,146.1Z M82.9,129.7L85.1,134.2L83.7,134.9L83.9,137.0L92.5,141.5L96.5,141.1L96.3,144.0L91.3,149.3L93.1,154.1L90.5,163.6L92.4,167.1L89.2,174.7L81.8,178.8L73.8,176.1L68.7,178.0L62.4,183.0L56.8,182.6L54.2,186.5L53.7,194.0L34.4,200.1L29.3,200.8L26.1,199.1L30.8,186.6L29.7,179.8L30.8,175.6L29.6,174.0L31.4,163.7L32.4,162.2L35.7,162.9L38.7,161.0L40.2,155.9L42.2,154.6L41.9,149.2L47.5,147.7L49.8,143.4L51.3,143.3L58.1,134.8L71.1,135.7L73.8,132.0L79.1,132.6L82.9,129.7Z M71.6,110.5L71.0,121.6L69.4,124.1L55.6,131.2L55.7,133.6L52.9,134.8L50.6,140.5L39.8,148.7L40.9,152.9L33.6,159.5L31.1,159.7L36.1,147.9L36.1,145.2L33.3,140.6L44.3,132.1L52.2,127.4L55.8,127.2L57.9,123.8L58.9,124.8L61.9,122.3L61.2,117.6L58.4,114.5L59.6,110.7L63.0,110.8L69.0,106.7L70.7,107.5L71.6,110.5Z"/>
+<path class="il" data-il="Çankırı" d="M384.4,95.4L386.4,98.7L396.0,103.3L397.0,106.8L396.4,115.3L401.7,132.8L399.3,140.2L392.7,144.7L381.3,143.3L367.0,135.8L364.8,136.0L363.3,139.5L360.3,139.8L358.2,138.4L355.9,132.5L346.1,121.3L331.9,113.7L324.8,113.6L326.6,107.1L325.6,104.1L328.8,100.4L333.6,95.8L349.2,91.6L351.5,86.5L356.5,87.5L366.8,95.6L386.7,86.0L387.9,89.0L384.6,93.1L384.4,95.4Z"/>
+<path class="il" data-il="Çorum" d="M432.3,78.5L433.9,78.8L435.7,74.8L438.0,78.5L439.8,86.9L445.0,86.4L445.0,90.5L443.0,96.2L442.9,103.2L441.9,103.8L445.1,114.2L456.8,118.1L460.6,119.9L462.2,122.5L461.5,130.2L456.7,137.9L456.1,146.9L448.5,148.0L449.0,156.6L443.4,160.8L437.0,159.4L431.0,163.4L412.6,163.5L409.2,166.5L396.9,169.5L397.4,166.0L403.6,160.1L399.2,153.8L398.1,147.4L392.7,144.7L399.3,140.2L401.8,134.1L396.4,115.3L397.0,106.8L396.0,103.3L407.2,97.9L407.3,94.4L404.1,89.9L407.8,80.9L414.3,71.2L432.3,78.5Z"/>
+<path class="il" data-il="Denizli" d="M202.0,271.3L205.5,272.5L210.7,284.3L209.7,288.2L205.3,293.1L193.3,300.9L193.2,310.1L200.2,312.4L201.6,316.3L186.8,327.7L187.0,336.4L189.3,338.2L189.2,339.9L181.5,354.7L180.4,362.3L177.9,365.0L177.6,370.3L174.5,375.3L171.2,374.9L166.2,367.9L165.3,360.4L163.9,357.7L159.0,353.5L152.5,351.0L150.5,343.6L144.5,341.0L144.4,335.7L141.5,329.1L144.1,326.5L150.3,327.1L156.8,320.6L155.4,316.2L151.4,310.8L156.2,300.6L148.7,294.2L152.6,290.5L153.2,285.3L158.7,282.2L172.6,286.9L182.1,282.4L189.1,287.2L189.9,281.7L194.1,270.9L197.4,269.3L202.0,271.3Z"/>
+<path class="il" data-il="Diyarbakır" d="M737.3,259.8L736.8,263.0L739.2,266.7L730.6,271.2L729.0,277.6L729.7,288.2L728.9,293.0L724.0,305.8L720.6,309.4L721.5,312.0L724.3,313.3L723.5,316.0L721.5,317.7L709.9,319.2L700.6,314.5L697.9,318.2L696.6,323.7L692.1,324.1L685.4,329.3L677.1,327.9L673.5,330.1L667.2,330.1L666.2,317.3L664.5,314.5L661.6,311.4L657.0,311.0L645.5,300.5L638.1,300.2L634.6,298.1L636.8,294.8L637.6,288.5L635.8,287.2L631.5,287.6L632.9,281.6L631.8,277.2L638.7,275.2L644.8,277.4L652.8,275.1L660.3,275.0L663.9,271.3L666.3,266.3L675.2,267.9L693.0,267.8L697.1,258.5L714.9,259.9L731.4,250.8L736.3,256.4L737.3,259.8Z"/>
+<path class="il" data-il="Düzce" d="M270.9,83.2L275.5,88.8L289.3,89.8L290.3,93.6L289.3,96.7L286.2,99.5L276.9,101.9L275.2,106.5L275.0,113.8L271.9,116.6L267.4,117.7L264.0,115.2L256.4,116.8L253.0,115.2L254.5,112.4L250.2,108.4L249.3,104.8L250.8,100.0L255.6,95.5L256.8,92.4L254.0,87.6L265.2,85.9L270.9,83.2Z"/>
+<path class="il" data-il="Edirne" d="M68.3,23.6L69.1,27.5L67.4,40.4L65.4,44.5L69.5,48.6L69.6,53.3L65.8,59.5L64.0,65.3L66.8,79.0L64.6,83.0L59.0,85.6L57.7,88.5L59.5,92.8L57.1,99.6L57.0,105.9L59.6,110.7L58.4,114.5L60.0,117.0L51.5,118.4L48.0,121.6L44.6,119.8L37.3,121.6L27.3,120.4L24.7,111.5L29.0,110.1L30.5,105.9L33.3,104.3L32.5,103.2L33.8,100.0L34.8,100.4L35.5,98.3L36.7,99.9L36.6,97.4L39.6,96.0L38.2,93.9L39.9,90.8L38.0,88.3L38.4,84.9L37.6,84.5L38.6,82.4L37.4,80.4L38.6,74.8L42.2,74.5L47.7,68.2L50.7,69.5L52.7,67.5L50.9,49.1L40.3,42.0L39.0,38.8L40.7,33.6L48.5,32.9L50.2,30.3L49.6,26.8L52.1,23.2L58.0,24.8L59.4,23.2L62.1,23.8L68.3,21.2L68.3,23.6Z"/>
+<path class="il" data-il="Elazığ" d="M688.9,224.7L686.0,228.2L685.9,235.4L687.5,240.9L689.3,241.7L690.6,245.6L689.2,250.8L685.8,250.9L683.8,257.2L686.4,262.4L686.2,267.9L666.3,266.3L663.9,271.3L660.3,275.0L652.8,275.1L644.8,277.4L638.7,275.2L624.8,279.2L618.0,272.7L611.6,272.2L599.8,267.9L597.5,265.4L596.1,261.2L601.8,250.1L609.1,249.1L609.2,240.5L607.1,233.9L608.3,231.3L611.5,231.7L614.8,229.6L616.2,232.9L615.6,239.0L617.4,240.4L628.5,239.3L649.0,249.2L663.7,243.1L667.6,236.0L666.6,228.9L669.1,225.9L674.0,225.5L689.4,216.4L691.1,221.3L688.9,224.7Z"/>
+<path class="il" data-il="Erzincan" d="M685.0,169.4L696.3,170.3L697.7,173.7L697.3,177.4L698.8,180.2L704.8,184.4L701.4,192.1L701.5,195.6L679.3,193.6L672.0,196.3L667.4,194.1L662.0,196.3L657.1,201.6L655.0,201.4L653.4,198.4L648.4,199.2L640.9,197.6L633.4,199.3L617.9,210.2L616.7,212.8L622.9,214.8L622.5,216.3L615.7,219.6L613.6,224.2L614.8,229.6L611.5,231.7L608.5,226.6L596.3,222.4L598.2,217.3L598.3,203.7L596.1,195.1L596.9,184.9L600.8,177.7L604.1,177.0L605.6,175.0L604.1,173.5L597.0,174.2L597.7,170.2L600.7,165.0L613.5,165.9L614.8,164.9L615.8,159.5L623.0,158.5L648.2,171.8L661.1,169.0L667.1,162.3L678.3,158.0L686.0,160.2L684.0,166.6L685.0,169.4Z"/>
+<path class="il" data-il="Erzurum" d="M780.8,94.0L780.9,98.1L783.0,104.5L791.8,119.9L790.4,131.9L789.1,134.4L772.4,142.7L771.8,144.7L775.0,151.3L782.5,153.7L788.6,160.0L791.1,164.7L791.7,166.6L784.3,171.7L778.3,171.1L777.3,172.6L778.7,175.8L788.3,180.1L789.8,192.8L787.3,198.4L775.4,203.8L774.4,205.8L775.6,209.9L768.9,216.7L758.0,220.9L752.5,220.1L749.2,217.6L743.0,209.1L737.0,205.6L729.2,207.6L725.2,200.4L720.4,199.9L714.5,193.8L712.4,193.1L704.4,196.8L701.7,195.9L701.4,192.1L704.8,184.4L698.8,180.2L697.3,177.4L697.7,173.7L696.3,170.3L685.0,169.4L684.0,167.7L686.0,160.2L695.1,161.1L707.9,152.4L709.6,149.1L709.0,146.8L700.2,144.3L698.7,141.5L695.8,125.5L711.1,117.2L724.7,106.3L728.3,108.3L737.0,108.8L737.5,110.8L734.8,117.4L735.9,122.4L739.0,123.5L749.6,116.5L757.8,119.7L761.2,117.7L766.1,97.7L770.1,95.3L780.8,94.0Z"/>
+<path class="il" data-il="Eskişehir" d="M253.9,161.6L263.3,159.8L283.8,161.8L287.4,163.7L292.1,171.0L294.9,171.6L296.3,176.2L294.5,179.0L294.5,181.6L301.4,197.9L302.1,210.5L301.1,216.5L295.1,220.5L294.1,224.7L291.0,226.7L286.1,225.3L277.0,226.1L273.1,223.9L269.3,213.2L266.4,212.5L254.7,221.1L249.9,217.4L245.9,220.2L244.3,223.2L237.5,226.7L233.5,222.4L232.2,219.0L229.8,217.9L228.0,212.3L223.7,207.2L223.4,198.7L215.2,189.2L217.4,184.0L210.8,184.2L208.8,181.3L208.9,177.8L212.2,173.1L220.3,173.0L225.3,167.3L231.1,165.6L233.0,162.4L235.3,152.7L242.5,150.9L248.7,152.8L251.1,156.0L251.5,160.6L253.9,161.6Z"/>
+<path class="il" data-il="Gaziantep" d="M576.0,333.1L579.5,334.4L582.3,338.1L579.4,338.0L577.0,340.3L572.9,346.5L572.0,351.1L574.4,363.5L580.5,372.2L580.4,379.0L575.6,381.7L563.9,385.3L557.1,390.3L553.7,381.9L544.7,376.3L542.7,369.7L540.2,366.9L532.2,367.8L529.3,373.9L523.9,377.8L523.5,380.3L518.5,377.7L516.2,378.0L507.6,370.5L512.1,359.8L520.9,348.9L528.7,342.9L530.2,344.0L532.0,351.9L534.0,352.8L542.1,345.1L561.1,340.8L562.3,338.4L562.4,333.1L569.6,330.8L576.0,333.1Z"/>
+<path class="il" data-il="Giresun" d="M633.9,87.2L634.6,87.5L631.8,96.2L631.8,103.7L633.2,108.6L627.5,109.9L624.1,113.1L619.2,123.6L619.6,130.7L625.5,133.0L629.6,137.5L622.1,145.0L621.9,152.5L624.0,156.2L623.3,158.2L615.8,159.5L606.4,154.8L601.2,156.2L591.6,149.2L587.1,126.0L580.3,110.5L585.6,95.9L593.0,96.7L596.4,99.2L604.4,98.7L608.8,94.7L613.1,96.3L617.8,92.0L623.2,89.7L628.7,90.2L633.9,87.2Z"/>
+<path class="il" data-il="Gümüşhane" d="M634.4,109.7L640.8,116.3L656.5,123.8L659.9,122.5L663.7,112.8L665.3,114.5L664.8,119.6L667.6,119.9L671.2,123.7L672.5,121.6L671.5,118.4L672.9,116.8L677.7,123.0L674.6,133.9L672.1,137.2L665.9,140.2L663.6,154.5L658.3,161.9L659.5,165.6L662.3,168.2L646.7,171.7L631.7,162.0L623.0,158.5L624.0,156.2L621.9,152.5L622.1,145.0L629.6,137.5L625.5,133.0L619.6,130.7L619.3,123.0L623.0,114.5L627.5,109.9L633.2,108.6L634.4,109.7Z"/>
+<path class="il" data-il="Hakkari" d="M869.2,318.7L869.7,320.9L868.4,324.4L869.7,325.4L873.5,323.4L878.1,323.9L884.9,315.9L886.6,316.8L887.9,319.3L885.2,324.0L887.7,326.6L887.9,328.8L886.9,330.3L887.2,335.1L886.2,337.6L889.0,338.7L890.2,341.6L892.3,342.1L896.4,346.8L896.9,349.0L894.3,352.4L895.6,357.5L887.8,354.9L882.0,361.1L874.5,364.1L875.2,365.6L873.1,369.6L870.7,368.5L867.6,360.8L869.5,356.9L871.7,355.7L871.2,351.6L869.3,348.7L859.8,345.6L853.4,351.7L842.8,351.9L835.1,349.4L832.2,345.1L832.1,332.4L834.9,318.6L848.3,318.6L853.3,320.4L856.8,318.6L861.3,319.2L867.6,315.8L869.2,318.7Z"/>
+<path class="il" data-il="Hatay" d="M490.0,365.8L498.9,366.8L503.2,370.3L507.6,370.5L518.6,379.5L516.2,383.5L516.7,387.0L514.4,391.6L514.9,396.5L512.8,400.8L514.4,407.4L516.0,407.9L515.3,411.9L518.0,411.9L519.8,417.2L515.8,419.4L510.1,418.2L509.0,420.4L505.6,419.0L504.6,422.5L505.6,428.2L504.7,433.6L501.8,433.4L501.1,436.5L497.0,436.9L495.5,440.2L495.0,445.9L492.5,442.6L488.0,441.5L487.5,437.6L484.1,439.1L483.3,438.2L486.1,432.4L476.9,414.0L477.0,412.4L480.3,409.3L482.9,404.3L486.3,402.3L488.8,398.4L496.1,394.3L497.1,390.1L495.8,385.4L496.7,381.9L494.0,377.0L487.9,372.0L484.2,374.9L484.6,376.4L483.1,374.3L485.0,369.8L490.0,365.8Z"/>
+<path class="il" data-il="Iğdır" d="M844.1,149.8L845.0,151.3L842.2,152.6L842.3,155.2L853.9,161.6L871.3,159.5L880.7,165.2L884.1,169.6L886.2,175.0L890.6,177.3L890.8,179.1L896.0,185.3L896.3,188.9L888.7,181.5L887.2,178.4L881.3,184.0L869.9,185.8L865.7,184.1L857.9,184.7L846.2,176.8L840.7,175.3L836.5,175.4L834.0,179.1L830.1,177.2L830.1,167.4L828.1,165.5L825.6,156.1L829.5,155.1L829.7,151.3L831.0,150.2L838.0,150.1L842.6,147.7L844.1,149.8Z"/>
+<path class="il" data-il="Isparta" d="M276.1,310.1L276.1,315.2L270.7,338.1L255.0,344.4L251.3,342.4L250.0,338.8L244.3,332.1L241.4,321.9L232.2,319.3L227.9,315.4L226.0,311.6L223.6,311.2L212.5,320.2L208.9,316.7L216.8,312.3L218.2,309.8L217.2,306.8L221.1,299.1L232.8,287.5L245.9,280.5L260.0,265.1L266.8,271.2L267.3,275.7L283.7,292.1L283.0,295.7L277.2,298.7L274.9,302.1L274.8,306.3L276.1,310.1Z"/>
+<path class="il" data-il="İstanbul" d="M174.3,76.1L189.7,80.8L202.4,82.6L203.3,86.3L192.3,92.1L185.4,90.3L184.7,92.7L182.4,94.6L181.9,98.4L177.3,102.7L174.5,103.0L163.8,95.2L162.6,92.1L166.8,84.4L165.7,82.6L166.4,80.1L170.0,76.9L174.3,76.1Z M125.2,54.0L128.6,57.6L145.3,68.0L160.8,74.9L167.6,75.9L167.5,77.9L164.1,81.7L165.7,83.9L165.0,87.0L161.3,91.3L159.8,88.2L159.4,89.6L161.7,92.4L154.2,96.0L151.4,94.1L144.7,95.6L143.6,94.7L143.3,91.5L141.1,93.9L134.9,89.6L126.8,87.3L121.7,88.5L118.6,82.1L120.0,77.8L123.0,75.6L125.2,67.0L126.7,57.4L124.3,55.2L125.2,54.0Z"/>
+<path class="il" data-il="İzmir" d="M39.9,269.2L39.8,271.1L38.6,271.5L38.3,270.2L39.9,269.2Z M55.6,263.0L57.0,264.2L57.6,269.0L55.4,267.6L55.6,263.0Z M91.4,220.2L93.0,223.9L93.0,230.6L86.8,237.0L77.4,239.4L75.7,245.2L75.4,247.1L80.3,249.9L82.6,261.3L85.3,260.2L90.8,261.9L95.8,267.1L104.0,269.8L109.2,277.5L116.0,273.0L121.4,272.8L126.3,277.4L136.1,280.1L142.0,292.8L127.5,298.9L113.1,298.9L112.4,300.5L105.6,302.0L94.3,301.3L90.1,305.8L82.5,307.5L81.1,301.4L76.2,301.2L68.8,295.1L64.9,296.0L63.3,298.2L61.4,289.4L59.1,289.2L59.0,286.8L59.9,286.7L58.3,285.1L52.7,286.1L52.2,290.8L51.2,290.4L51.7,292.6L50.6,293.2L49.7,290.5L49.2,292.2L47.8,291.5L47.2,287.5L41.2,285.0L41.3,282.5L40.2,284.8L38.7,284.9L36.4,282.2L33.9,282.1L34.0,280.2L35.8,280.5L36.2,278.2L37.2,278.4L36.4,274.6L37.1,276.1L37.9,274.6L38.0,277.8L40.8,279.2L41.0,276.5L41.8,278.2L45.6,274.6L44.1,271.1L45.9,272.9L47.1,271.1L43.5,267.8L41.4,269.8L42.3,266.6L40.4,264.2L39.6,256.7L42.5,253.9L47.5,256.0L49.6,262.1L52.2,264.1L52.9,268.3L50.5,268.2L51.3,269.5L50.3,271.2L51.6,271.5L54.5,279.0L55.8,278.5L54.5,273.8L56.0,270.7L57.4,271.1L58.8,275.3L60.7,276.0L70.4,271.8L73.6,273.1L76.5,269.8L77.5,270.2L77.0,268.5L74.8,269.7L70.8,268.4L67.2,270.8L64.2,265.7L61.6,264.4L64.4,265.5L62.5,262.1L61.4,262.8L62.5,262.1L62.1,260.2L58.3,258.3L58.9,256.9L56.7,255.9L58.2,254.9L57.1,254.3L57.5,249.7L61.4,248.3L64.7,250.2L65.3,248.0L66.8,248.0L64.6,244.0L67.0,243.2L66.9,244.9L68.2,245.4L68.3,242.6L72.7,240.4L71.3,239.3L72.2,238.0L71.6,236.1L70.4,237.9L68.1,235.8L63.0,237.9L60.4,235.4L61.1,230.2L60.3,231.0L60.3,229.8L64.4,226.8L62.0,222.3L58.7,220.1L67.6,214.2L77.8,203.0L88.5,205.8L90.9,211.7L91.4,220.2Z"/>
+<path class="il" data-il="Kahramanmaraş" d="M535.3,259.8L536.3,260.9L546.9,259.7L546.2,262.5L542.5,266.7L542.7,268.8L554.6,269.5L569.4,279.1L569.3,285.1L563.0,305.8L557.9,315.5L552.7,321.4L553.3,326.8L562.4,333.1L562.2,338.9L559.3,341.7L542.1,345.1L534.0,352.8L531.9,351.8L529.1,342.8L520.9,348.9L514.1,340.2L504.7,344.0L499.0,343.0L497.0,332.7L503.8,317.4L501.7,307.9L507.0,282.7L514.3,273.4L518.6,265.9L520.3,260.3L529.8,257.4L535.3,259.8Z"/>
+<path class="il" data-il="Karabük" d="M346.7,55.9L350.0,63.3L344.2,72.6L344.1,77.6L351.5,86.5L349.2,91.6L333.6,95.8L325.6,104.1L324.0,101.6L314.6,96.9L314.8,92.2L305.8,91.5L306.6,83.9L310.9,78.8L321.4,74.8L329.8,68.7L332.0,66.0L333.9,59.9L338.4,55.4L339.7,56.4L344.5,53.5L346.7,55.9Z"/>
+<path class="il" data-il="Karaman" d="M386.4,341.8L391.2,349.1L398.9,351.2L403.5,355.4L398.6,358.6L393.9,358.9L382.8,365.5L377.3,364.2L372.5,367.2L366.0,367.4L353.3,377.2L346.2,380.1L349.8,388.9L358.0,395.1L357.8,399.1L350.5,402.7L338.5,405.2L332.1,404.2L324.9,396.6L322.7,389.1L323.4,384.0L329.8,381.7L336.3,377.3L339.1,373.3L330.1,370.8L327.7,366.5L331.6,361.1L333.6,353.2L337.2,351.7L343.3,353.1L341.6,348.6L344.1,342.6L350.6,341.4L353.1,337.3L354.8,336.8L357.3,337.0L361.7,342.1L364.4,342.2L370.5,331.1L377.9,326.9L381.6,326.6L386.4,341.8Z"/>
+<path class="il" data-il="Kars" d="M839.7,93.8L843.2,97.9L843.2,103.8L846.6,111.4L846.7,115.3L841.6,123.8L841.9,125.8L837.2,129.6L840.6,133.7L839.4,139.4L843.5,144.9L843.5,146.9L838.5,149.9L831.0,150.2L829.7,151.3L829.5,155.1L826.1,155.3L825.4,158.0L828.1,165.5L816.6,162.3L798.4,168.6L794.6,168.5L791.7,166.6L788.6,160.0L782.5,153.7L775.0,151.3L771.9,145.1L772.4,142.7L789.3,134.2L791.9,121.6L790.9,118.1L793.8,118.1L804.2,113.0L807.6,98.3L822.0,91.0L824.0,86.8L824.9,79.8L828.8,78.5L832.1,80.1L833.7,83.6L832.7,86.3L833.8,90.8L839.7,93.8Z"/>
+<path class="il" data-il="Kastamonu" d="M363.7,20.1L404.8,24.8L404.8,30.6L406.7,35.5L406.8,40.3L417.2,41.3L422.1,45.3L420.6,50.7L415.9,54.4L416.4,71.3L414.5,71.1L412.6,73.2L404.1,89.9L407.3,94.4L407.2,97.9L396.0,103.3L389.4,100.4L384.5,96.2L384.6,93.1L387.9,89.0L386.3,85.9L368.8,95.4L365.8,95.5L357.9,88.4L351.5,86.5L347.5,80.8L344.6,79.0L343.9,73.3L350.0,63.3L345.7,54.0L339.9,50.5L333.1,33.4L343.9,30.6L363.7,20.1Z"/>
+<path class="il" data-il="Kayseri" d="M484.7,218.2L490.3,223.1L501.4,223.1L504.5,221.5L508.4,223.1L515.1,219.9L523.2,220.0L528.4,223.0L530.9,228.1L521.1,260.0L510.7,278.3L509.1,277.3L506.1,269.2L501.3,268.7L493.9,272.9L487.5,287.9L472.3,296.1L469.5,303.1L461.0,305.6L453.1,302.9L455.2,297.4L455.2,288.7L453.7,285.1L451.7,282.9L443.7,281.0L440.4,271.5L437.1,270.8L436.5,268.8L437.3,263.6L441.6,261.7L444.0,258.5L443.9,249.3L438.6,245.8L440.8,231.1L444.4,229.4L451.9,231.6L463.1,225.2L462.6,219.2L472.1,218.0L478.4,211.4L481.8,213.0L484.7,218.2Z"/>
+<path class="il" data-il="Kilis" d="M553.7,381.9L557.1,390.3L556.0,391.3L540.2,389.8L537.7,392.4L534.8,390.0L536.1,385.7L530.9,382.0L524.4,380.8L523.4,379.1L529.3,373.9L532.2,367.8L539.3,366.7L542.0,368.3L544.7,376.3L553.7,381.9Z"/>
+<path class="il" data-il="Kırıkkale" d="M390.5,144.7L398.0,147.2L399.2,153.8L403.5,160.3L397.1,166.5L397.5,176.2L390.2,183.3L387.6,193.2L383.2,201.4L379.5,201.5L375.1,205.8L372.4,214.5L367.3,220.9L364.9,216.5L366.0,212.9L365.1,210.2L361.2,209.3L358.8,206.1L361.2,200.2L363.6,182.6L367.8,176.1L375.9,170.4L376.7,165.8L374.7,159.6L376.8,152.1L380.8,144.9L383.6,143.0L390.5,144.7Z"/>
+<path class="il" data-il="Kırklareli" d="M81.4,14.0L84.9,15.5L88.9,22.3L93.2,25.1L95.2,28.8L96.0,26.1L101.7,23.5L106.8,26.2L108.0,25.5L107.3,23.0L109.1,21.8L111.5,23.8L117.4,22.5L118.7,30.0L116.5,29.2L114.6,31.4L117.9,40.8L120.9,45.2L120.2,47.4L122.9,51.6L109.8,57.3L103.5,57.7L100.9,60.3L99.4,68.1L93.8,77.1L91.5,76.7L87.1,70.8L81.8,68.2L65.6,69.2L64.1,67.0L64.2,64.0L69.6,52.7L69.5,48.6L65.4,44.5L67.3,40.8L68.2,35.0L68.8,19.2L72.8,15.0L79.3,16.9L79.2,15.5L81.4,14.0Z"/>
+<path class="il" data-il="Kırşehir" d="M404.8,180.8L414.1,181.5L416.1,185.7L419.6,189.1L418.7,193.6L424.8,198.5L422.6,209.5L425.0,210.2L428.0,207.2L429.3,207.8L426.2,213.5L426.5,216.9L423.3,220.1L423.8,225.3L420.7,226.6L421.1,229.9L418.5,232.7L416.3,239.8L410.1,239.9L408.4,244.6L406.5,246.1L402.5,240.1L397.9,238.6L393.5,234.4L390.9,231.5L391.6,229.4L375.7,220.2L372.4,214.5L375.1,205.8L379.5,201.5L383.2,201.4L387.6,193.2L390.0,183.7L392.6,180.4L397.5,176.2L404.8,180.8Z"/>
+<path class="il" data-il="Kocaeli" d="M221.4,77.8L225.0,79.1L226.3,81.3L226.0,83.3L223.6,85.6L222.1,91.3L225.6,96.3L226.3,102.0L222.2,105.4L222.7,110.0L219.4,119.0L209.6,122.5L197.9,120.0L189.1,124.0L183.4,124.1L182.4,123.7L182.5,115.4L186.2,111.0L185.9,112.7L188.5,114.9L200.0,111.8L204.9,112.9L206.0,110.0L198.7,111.0L196.3,108.9L190.9,108.1L178.8,110.0L177.8,105.7L174.3,106.7L175.9,104.5L174.7,103.9L181.9,98.4L182.4,94.6L184.7,92.7L185.4,90.3L192.6,92.0L203.0,87.1L202.4,82.7L215.8,83.0L219.2,81.3L219.1,79.6L221.4,77.8Z"/>
+<path class="il" data-il="Konya" d="M358.6,216.7L365.3,229.4L364.7,246.3L369.5,256.9L364.8,263.7L361.9,276.6L359.1,283.4L359.2,286.5L364.8,299.9L367.3,303.7L370.9,304.7L401.2,299.7L409.5,309.9L415.3,320.4L415.4,323.9L412.8,330.1L412.0,335.7L416.7,340.9L418.2,345.1L417.3,346.4L403.5,355.4L398.9,351.2L391.1,349.0L386.4,341.8L381.6,326.6L377.9,326.9L369.9,331.7L364.6,342.1L361.7,342.1L357.3,337.0L353.7,336.9L350.6,341.4L345.8,341.7L343.2,343.8L341.6,348.9L343.3,353.1L337.2,351.7L333.4,353.4L333.1,357.8L327.7,368.0L330.4,371.0L339.1,373.3L336.3,377.3L329.8,381.7L323.4,384.0L320.9,378.9L315.0,377.3L312.4,367.3L294.4,348.1L288.9,345.4L276.5,344.5L272.5,342.6L270.2,338.9L276.1,315.2L274.8,302.5L277.2,298.7L283.0,295.7L283.9,293.0L267.0,275.3L266.5,272.2L286.7,257.2L283.5,254.3L282.5,250.8L288.0,235.2L287.5,225.6L290.4,226.8L293.6,225.1L296.1,220.1L306.8,229.9L315.2,227.3L323.4,232.4L327.3,228.6L334.1,229.8L340.4,221.5L346.2,223.3L348.9,221.1L350.5,217.0L353.3,216.8L356.7,213.0L358.6,216.7Z"/>
+<path class="il" data-il="Kütahya" d="M188.5,170.5L193.8,169.5L195.9,180.9L206.5,185.0L217.4,184.0L215.2,189.0L223.4,198.7L223.5,206.7L228.0,212.3L229.5,219.5L226.6,223.3L220.9,226.6L213.5,245.2L205.0,251.4L203.9,251.9L202.4,241.9L194.3,239.5L176.5,246.9L173.2,250.3L164.1,250.7L163.9,242.2L160.4,231.4L157.1,226.8L148.3,223.7L146.7,220.8L146.7,215.9L152.8,212.5L157.0,206.8L160.7,191.4L166.7,194.6L173.0,193.6L174.8,184.2L181.2,169.4L183.3,168.2L188.5,170.5Z"/>
+<path class="il" data-il="Malatya" d="M599.7,224.0L604.2,224.1L608.5,226.6L611.5,231.7L608.3,231.3L607.2,233.5L609.2,240.5L609.1,249.1L601.3,250.6L596.0,260.3L597.5,265.4L599.8,267.9L611.6,272.2L618.4,272.9L624.8,279.2L631.8,277.2L632.9,280.8L632.0,286.8L629.8,290.3L626.5,292.2L610.3,293.9L606.0,291.7L609.3,286.7L605.2,284.6L601.8,285.4L586.2,294.1L588.3,305.6L578.7,309.6L571.7,308.2L567.7,311.4L559.4,313.1L565.9,297.6L569.4,284.8L569.4,279.1L555.0,269.6L542.9,269.0L542.5,266.7L546.2,262.5L547.1,259.4L560.1,247.3L561.2,243.2L559.1,234.8L560.8,231.3L569.7,231.9L577.1,228.0L588.0,227.1L594.2,222.5L599.7,224.0Z"/>
+<path class="il" data-il="Manisa" d="M101.1,208.2L111.2,207.4L112.1,209.4L110.5,213.5L111.1,215.8L116.5,217.5L118.6,220.2L121.2,227.7L123.0,228.9L144.8,219.5L148.8,224.2L158.5,228.3L161.8,234.6L164.1,243.7L164.1,250.7L156.7,256.8L155.3,261.0L155.7,273.4L154.3,276.0L158.7,282.2L153.2,285.3L152.6,290.5L149.4,293.4L142.0,292.8L136.1,280.1L126.3,277.4L121.4,272.8L116.0,273.0L109.2,277.5L104.0,269.8L95.8,267.1L90.8,261.9L85.3,260.2L82.6,261.3L80.2,249.7L75.4,247.1L77.4,239.4L86.8,237.0L93.0,230.6L93.0,223.9L91.4,220.2L90.9,211.7L88.5,205.8L93.5,203.5L101.1,208.2Z"/>
+<path class="il" data-il="Mardin" d="M709.9,319.2L721.5,317.7L727.8,330.1L739.8,330.2L745.7,328.7L750.9,322.0L759.6,317.7L763.5,324.6L762.4,328.1L763.1,332.2L754.5,335.3L753.3,337.7L754.2,347.5L758.4,346.8L759.4,348.9L760.3,353.4L759.4,358.1L745.0,361.7L729.2,363.1L726.9,361.2L716.8,359.1L712.1,360.2L708.9,359.3L698.0,365.6L693.0,366.8L684.5,373.0L681.1,370.9L678.8,365.8L678.0,358.6L669.9,339.6L667.2,330.1L673.5,330.1L677.1,327.9L685.7,329.2L692.1,324.1L696.6,323.7L697.9,318.2L700.6,314.5L709.9,319.2Z"/>
+<path class="il" data-il="Mersin" d="M436.8,358.7L437.7,362.2L440.8,364.6L443.3,369.3L444.0,378.5L442.3,382.6L436.5,385.8L433.9,382.0L429.7,380.1L424.7,380.2L420.3,382.8L414.3,389.8L407.2,395.0L402.1,402.8L400.0,403.9L398.0,406.6L397.7,412.7L396.3,414.2L394.2,413.6L392.6,418.4L391.4,414.6L388.3,412.8L385.7,415.6L385.5,417.8L380.3,422.2L379.9,424.8L378.0,420.9L375.4,422.1L374.0,425.4L369.9,423.2L366.2,425.5L364.3,423.5L361.4,425.2L354.7,424.6L351.7,429.1L350.3,427.4L345.6,426.9L338.8,432.7L333.1,431.2L327.8,427.1L330.9,418.8L332.1,404.2L340.5,405.1L350.5,402.7L357.8,399.1L358.0,395.1L349.8,388.9L346.2,380.1L353.3,377.2L363.2,369.0L366.3,367.3L372.5,367.2L376.8,364.3L382.3,365.6L386.8,364.0L393.6,359.0L400.7,357.8L409.1,352.5L417.1,346.6L418.0,344.0L422.2,343.9L427.1,340.9L430.7,340.9L436.8,358.7Z"/>
+<path class="il" data-il="Muğla" d="M158.5,388.6L159.6,389.1L158.4,390.4L158.5,388.6Z M89.5,367.5L92.4,369.5L90.3,369.4L89.5,367.5Z M94.3,356.3L94.1,357.9L92.3,357.9L94.3,356.3Z M138.2,334.3L144.2,335.5L144.6,341.2L150.5,343.6L152.5,351.0L159.0,353.5L163.9,357.7L165.3,360.4L166.2,367.9L171.2,374.9L174.7,375.0L177.7,370.1L178.0,364.6L180.4,362.3L181.3,365.7L180.8,370.7L187.7,365.5L191.3,367.5L193.8,371.9L193.6,375.7L190.4,382.1L189.0,393.0L177.4,404.7L176.0,413.1L174.5,413.8L167.1,408.1L168.6,405.4L167.0,402.3L168.2,400.9L167.6,397.0L162.8,397.8L164.5,396.8L163.4,394.9L164.2,392.7L165.9,393.1L166.0,390.9L167.1,391.3L166.5,392.7L167.8,392.2L167.2,389.3L159.1,383.7L157.5,386.6L158.2,387.0L156.1,387.6L155.5,389.8L156.4,391.8L158.0,391.4L155.2,394.8L154.2,392.3L155.5,391.5L152.8,390.7L152.6,388.3L149.7,386.6L147.1,387.9L146.0,385.9L144.6,387.1L144.1,385.1L145.2,381.9L143.2,379.7L141.5,378.7L140.8,381.7L138.7,380.8L139.1,379.5L137.4,380.0L137.1,375.4L133.6,377.5L135.8,378.3L134.5,381.7L130.4,379.6L130.5,381.0L129.2,381.3L128.3,379.8L130.6,378.9L128.0,377.6L126.8,380.4L130.1,385.4L128.1,385.2L126.4,388.1L123.6,388.4L120.9,394.5L119.1,394.3L117.2,396.6L116.5,395.6L115.0,397.1L113.9,393.9L118.9,393.7L120.4,390.9L119.3,390.0L118.6,391.6L119.3,389.0L117.9,387.8L117.1,389.5L114.3,388.4L122.0,385.6L119.9,384.5L121.2,382.4L122.2,383.6L121.6,380.5L118.4,383.4L118.1,381.7L112.8,384.6L103.5,383.2L101.4,385.7L101.1,390.2L96.2,388.4L91.7,390.9L86.4,388.4L86.4,386.7L89.1,386.5L89.5,384.1L97.9,383.1L99.3,380.0L101.9,381.7L108.0,379.8L117.5,381.5L119.0,379.3L116.1,378.4L117.4,378.1L116.0,377.1L118.7,375.5L116.6,373.7L118.0,373.4L116.9,372.3L120.6,371.3L123.8,373.6L123.3,371.0L125.5,370.6L126.0,367.4L127.6,368.0L128.4,366.3L131.3,365.2L131.0,363.9L120.7,365.1L121.3,366.3L120.6,366.6L120.0,365.4L112.5,365.3L105.8,367.9L101.4,367.1L99.1,368.9L96.2,367.8L95.8,369.1L92.0,368.3L89.3,365.0L87.0,367.4L87.3,365.6L84.9,366.4L85.4,367.5L83.7,370.2L81.8,369.8L80.0,363.5L83.2,360.0L81.4,359.9L81.4,358.6L84.0,359.7L84.6,356.7L85.6,358.6L86.5,356.9L87.7,357.7L87.5,359.3L89.6,358.8L91.4,362.0L96.6,358.2L95.1,358.3L95.6,357.0L94.0,354.4L96.1,353.2L97.1,354.4L96.2,355.4L98.1,354.8L96.3,353.1L98.0,348.6L95.4,348.8L95.2,351.0L93.3,352.1L93.6,348.8L90.7,350.3L92.7,346.2L91.8,344.3L90.1,347.1L87.5,345.4L87.4,343.5L89.7,341.8L88.9,339.1L92.3,329.4L110.6,336.8L122.9,335.6L126.2,329.7L129.6,328.0L138.2,334.3Z"/>
+<path class="il" data-il="Muş" d="M799.2,220.8L801.1,236.1L780.7,236.2L772.0,240.9L771.9,244.0L765.4,245.0L768.1,252.9L759.1,260.0L748.4,259.3L745.5,260.4L743.3,263.3L737.9,264.4L736.8,263.0L737.4,259.0L736.6,256.9L732.0,252.2L726.3,238.9L731.8,230.0L731.8,224.4L728.6,220.8L727.0,212.1L728.1,208.5L730.9,206.6L737.0,205.6L739.6,206.8L743.9,209.9L749.8,218.2L757.5,220.9L768.9,216.7L775.6,209.9L774.4,205.8L776.0,203.1L787.0,198.5L789.3,205.9L796.5,214.5L799.2,220.8Z"/>
+<path class="il" data-il="Nevşehir" d="M434.0,207.0L437.1,208.9L435.9,216.4L440.5,222.3L442.5,229.4L440.8,231.3L438.6,245.8L443.9,249.3L444.0,258.5L441.6,261.7L437.2,263.7L436.4,266.8L437.0,273.1L435.0,275.4L431.1,276.3L425.4,272.4L419.3,274.7L415.6,273.0L410.5,268.0L407.1,258.3L403.9,253.2L406.5,246.1L408.4,244.6L408.9,241.1L416.3,239.8L418.5,232.7L421.1,229.9L420.7,226.6L423.8,225.3L423.3,220.1L426.5,216.9L426.2,213.5L429.3,207.8L428.0,207.2L425.0,210.2L422.6,209.5L424.8,198.5L431.0,202.4L431.2,205.2L434.0,207.0Z"/>
+<path class="il" data-il="Niğde" d="M418.8,274.6L425.4,272.4L432.4,276.3L436.3,274.6L437.1,270.8L439.8,271.0L443.6,280.9L452.0,283.1L455.2,289.1L455.1,298.0L450.4,305.6L450.9,310.9L449.9,312.7L442.7,320.3L435.0,319.7L433.0,321.0L432.2,323.2L434.3,332.2L430.9,336.2L430.7,340.9L426.6,341.0L421.8,343.9L418.0,344.0L416.1,340.0L412.2,337.0L412.0,333.4L415.4,323.9L415.4,320.7L406.7,305.9L400.2,299.2L403.0,295.4L406.8,296.4L409.6,291.0L412.6,288.9L412.6,283.7L411.2,280.4L412.6,270.4L418.8,274.6Z"/>
+<path class="il" data-il="Ordu" d="M541.5,82.3L547.1,82.5L547.1,84.0L551.5,85.2L558.4,91.3L561.8,89.4L565.2,83.1L566.2,84.7L570.0,84.5L569.5,88.4L571.0,91.0L573.7,91.7L574.2,93.7L585.6,95.8L580.3,110.5L585.3,120.1L587.1,127.4L581.1,134.0L575.3,135.3L572.0,138.9L568.3,139.9L566.3,138.3L561.5,124.1L555.1,123.5L548.0,119.0L547.1,116.2L542.2,113.6L532.4,113.7L530.3,111.1L519.1,105.7L519.4,103.6L529.1,98.1L533.3,89.5L540.6,84.7L540.5,82.3L541.5,82.3Z"/>
+<path class="il" data-il="Osmaniye" d="M502.3,344.0L509.8,342.7L514.1,340.2L520.9,348.9L511.8,360.2L507.6,370.5L503.2,370.3L498.9,366.8L489.0,365.7L489.9,359.1L487.2,355.7L480.3,358.8L482.7,353.4L481.6,351.2L481.7,343.3L488.2,329.7L494.1,324.8L501.1,323.7L497.0,333.9L498.5,342.5L502.3,344.0Z"/>
+<path class="il" data-il="Rize" d="M729.3,71.9L730.9,78.0L733.3,81.8L738.1,84.5L738.2,87.9L735.0,90.2L724.7,106.3L721.2,109.5L711.1,117.2L695.1,125.5L694.9,118.9L696.4,111.0L692.2,96.9L688.2,93.1L690.7,90.9L698.1,90.8L706.1,86.6L709.9,81.3L719.0,79.0L726.2,72.8L729.3,71.9Z"/>
+<path class="il" data-il="Sakarya" d="M225.9,80.1L239.0,83.7L243.8,86.7L254.0,87.6L256.8,91.6L255.6,95.5L250.8,100.0L249.3,104.4L250.2,108.4L254.6,112.6L252.8,116.1L252.6,123.3L247.8,126.4L240.1,126.7L236.3,132.2L238.8,136.0L237.7,139.5L226.3,134.8L214.5,137.0L207.6,130.0L205.5,123.9L205.3,122.5L210.0,122.4L220.0,118.4L222.7,110.0L222.2,105.4L226.2,102.4L225.6,96.3L222.1,91.3L223.6,85.6L226.2,83.0L225.9,80.1Z"/>
+<path class="il" data-il="Samsun" d="M517.5,65.9L527.1,68.6L533.3,72.7L534.6,74.6L535.0,79.5L540.5,82.3L540.6,84.7L533.5,89.2L529.1,98.1L519.4,103.6L519.6,101.2L517.6,99.9L508.2,102.1L504.6,99.3L504.4,96.2L498.1,94.1L496.6,94.2L494.7,100.5L489.3,103.9L485.0,101.6L473.0,101.3L462.9,91.8L445.0,86.4L440.1,87.2L438.0,78.5L435.7,74.8L437.8,71.0L446.0,66.1L451.4,74.1L458.4,74.1L461.7,67.4L460.1,59.5L463.9,47.2L471.0,47.3L485.0,40.5L489.7,43.9L492.5,48.4L493.2,60.1L498.3,67.7L503.6,70.8L502.8,71.9L505.0,74.7L511.0,74.4L517.5,65.9Z"/>
+<path class="il" data-il="Şanlıurfa" d="M638.6,300.3L646.7,301.2L657.0,311.0L661.6,311.4L665.9,316.5L667.3,331.9L678.0,358.6L678.9,366.1L681.1,370.9L684.5,373.0L665.3,383.7L636.8,389.7L627.2,387.1L613.8,386.9L606.0,378.1L598.4,374.2L588.9,373.6L580.4,379.0L580.4,371.6L574.4,363.5L572.2,354.6L572.9,346.5L577.0,340.3L580.0,337.9L587.7,340.1L595.2,334.9L602.1,334.6L608.5,328.6L618.1,324.5L618.4,320.9L624.3,316.7L625.3,307.6L629.1,301.4L634.6,298.1L638.6,300.3Z"/>
+<path class="il" data-il="Siirt" d="M783.8,291.2L799.2,299.3L804.2,295.7L809.7,296.7L813.7,304.4L811.2,313.0L793.5,308.4L788.4,311.3L780.6,320.6L772.8,321.6L764.0,320.7L758.8,316.1L754.1,317.5L751.6,315.2L753.3,311.9L753.0,309.9L743.1,309.7L738.2,305.7L741.4,301.1L741.4,298.7L747.2,297.5L750.4,286.9L761.6,290.1L764.5,289.6L766.7,291.4L769.9,286.5L775.1,285.4L783.8,291.2Z"/>
+<path class="il" data-il="Sinop" d="M438.2,14.5L441.5,14.9L444.3,19.7L449.7,18.7L450.3,20.7L447.3,19.9L445.2,24.0L444.9,27.2L446.7,31.7L453.5,41.9L463.9,47.2L460.1,59.5L461.7,67.1L459.3,73.5L456.0,75.1L451.4,74.1L446.0,66.1L437.8,71.0L433.5,78.9L416.4,71.3L415.9,54.4L420.6,50.7L422.1,45.3L417.2,41.3L406.8,40.3L406.7,35.5L404.8,30.6L404.8,24.8L408.7,25.8L417.1,23.2L423.0,25.7L431.4,24.8L436.4,19.9L438.2,14.5Z"/>
+<path class="il" data-il="Şırnak" d="M801.3,311.4L811.2,313.0L814.4,316.1L834.9,318.6L832.1,332.4L832.0,344.0L835.1,349.4L829.0,345.4L827.0,347.1L819.6,342.3L813.6,343.6L810.6,346.2L802.5,342.1L799.4,344.3L799.9,346.1L797.9,346.9L792.9,357.5L782.3,360.1L781.0,355.0L782.0,352.2L779.1,348.6L775.7,348.8L776.2,346.1L768.1,354.7L759.4,358.1L760.3,353.4L758.9,347.2L754.0,347.2L753.4,336.0L763.1,332.2L762.4,328.1L763.5,324.6L760.3,318.5L766.4,321.6L779.9,320.8L784.5,317.2L788.4,311.3L793.1,308.5L797.0,308.4L801.3,311.4Z"/>
+<path class="il" data-il="Sivas" d="M590.1,139.3L591.4,148.7L594.5,151.9L600.9,156.1L606.4,154.8L615.8,159.5L614.8,164.9L613.5,165.9L600.7,165.0L596.9,172.8L597.7,174.9L604.1,173.5L605.6,175.0L604.1,177.0L600.6,178.0L596.8,185.3L596.1,195.1L598.3,203.7L598.0,219.1L596.3,222.4L592.6,223.3L588.3,227.0L577.1,228.0L569.7,231.9L560.8,231.3L559.1,234.8L561.2,243.2L560.1,247.3L548.7,258.8L536.3,260.9L529.8,257.4L521.1,260.0L530.9,228.1L527.9,222.6L523.2,220.0L515.6,219.9L508.4,223.1L504.5,221.5L501.4,223.1L489.8,223.0L485.3,219.1L481.8,213.0L478.4,211.4L490.2,197.4L494.4,185.3L492.8,184.2L492.9,180.5L490.4,178.0L489.3,173.1L485.5,169.9L486.5,166.7L492.6,166.7L497.6,164.5L507.6,166.4L515.3,163.4L518.6,160.4L520.1,156.6L519.6,153.0L523.0,147.3L532.0,150.2L537.1,147.4L553.6,152.2L555.4,146.3L559.5,143.6L560.8,134.4L563.6,131.4L566.5,138.6L569.3,140.0L575.3,135.3L581.1,134.0L587.1,127.4L590.1,139.3Z"/>
+<path class="il" data-il="Tekirdağ" d="M122.9,51.6L124.5,52.2L125.2,53.9L124.3,55.2L126.7,57.4L123.1,75.3L120.0,77.8L118.6,82.1L121.7,88.5L116.6,90.4L114.3,95.2L110.3,95.2L105.0,91.8L93.3,94.6L90.7,103.7L85.6,109.2L83.9,113.8L77.9,119.0L71.0,121.6L71.6,110.5L70.5,107.2L68.2,106.9L61.4,110.9L59.6,110.7L57.1,106.7L57.1,99.6L59.5,92.8L57.7,90.3L57.9,87.8L59.0,85.6L64.6,83.0L66.7,79.4L64.9,68.5L67.4,69.7L81.8,68.2L87.1,70.8L91.5,76.7L93.8,77.1L99.4,68.1L100.9,60.3L103.5,57.7L109.8,57.3L122.9,51.6Z"/>
+<path class="il" data-il="Tokat" d="M519.6,101.2L519.5,106.3L530.3,111.1L532.2,113.7L537.1,114.7L542.2,113.6L547.1,116.2L548.0,119.0L555.1,123.5L561.9,124.4L563.6,131.4L560.8,134.4L559.5,143.6L555.4,146.3L553.6,152.2L537.1,147.4L532.0,150.2L523.0,147.3L519.6,153.0L520.1,156.8L517.9,161.7L507.6,166.4L497.6,164.5L492.6,166.7L486.5,166.7L484.2,157.4L470.1,156.8L464.5,149.7L467.5,143.8L473.9,140.1L479.9,127.9L485.2,127.8L489.0,130.8L494.3,131.8L502.2,126.3L508.3,117.0L509.0,112.4L506.4,105.3L507.9,102.0L515.8,99.9L519.6,101.2Z"/>
+<path class="il" data-il="Trabzon" d="M645.8,85.2L648.8,86.3L652.5,90.9L656.0,92.8L662.5,92.6L666.8,96.0L674.3,95.6L678.3,99.0L683.4,97.8L688.2,93.1L689.7,93.8L694.2,101.5L696.4,111.0L694.9,118.9L695.1,125.5L683.2,127.9L677.0,127.1L677.7,123.0L674.6,118.3L672.9,116.8L671.8,117.7L672.5,121.9L670.5,123.6L667.6,119.9L664.7,119.5L665.3,114.5L663.7,112.8L660.1,122.3L657.7,123.8L640.6,116.1L632.7,107.7L631.8,95.6L634.6,87.5L639.5,89.3L645.8,85.2Z"/>
+<path class="il" data-il="Tunceli" d="M685.3,194.4L697.9,194.3L696.6,197.3L688.2,202.6L690.8,205.7L688.1,207.8L682.1,212.1L677.3,210.4L674.2,217.9L674.1,224.1L673.1,225.8L669.1,225.9L666.6,228.7L667.6,236.0L662.4,244.5L655.5,245.6L649.0,249.2L628.5,239.3L619.1,240.8L615.6,239.0L616.2,232.5L613.6,224.1L615.8,219.5L621.4,217.3L622.9,214.8L616.7,212.8L618.6,209.4L624.7,206.2L630.8,200.2L641.3,197.6L648.4,199.2L653.9,198.4L654.8,201.3L657.1,201.6L662.0,196.3L666.0,194.5L672.0,196.3L678.7,193.7L685.3,194.4Z"/>
+<path class="il" data-il="Uşak" d="M203.8,247.2L202.9,256.4L197.4,269.3L193.6,271.7L189.9,281.7L189.1,287.2L182.1,282.4L172.6,286.9L166.9,285.4L158.7,282.2L154.3,276.0L155.7,273.8L155.0,264.4L156.7,256.8L163.4,250.8L173.2,250.3L176.5,246.9L193.4,239.6L202.4,241.9L203.8,247.2Z"/>
+<path class="il" data-il="Van" d="M827.7,204.6L831.6,205.3L834.5,209.3L839.0,212.2L841.8,211.2L845.1,206.5L856.5,207.5L859.8,206.4L863.4,212.3L863.5,218.1L868.4,222.5L869.0,225.1L866.9,224.0L865.3,225.7L867.6,227.3L868.4,230.0L866.7,232.4L868.6,239.4L872.9,243.4L871.1,251.5L872.2,254.5L871.5,256.1L873.9,257.8L873.0,274.0L876.2,275.5L879.4,274.0L881.9,277.9L877.2,283.1L877.0,290.3L875.1,291.5L875.8,293.5L873.2,295.4L869.3,307.8L877.6,310.0L877.4,312.2L880.1,313.8L879.7,315.8L884.9,315.9L880.5,322.1L877.8,324.0L873.5,323.4L869.3,325.3L868.4,324.2L869.6,319.8L867.6,315.8L861.3,319.2L856.8,318.6L853.3,320.4L848.3,318.6L826.6,318.5L814.0,316.0L811.2,313.0L813.7,304.4L811.1,298.1L804.2,295.7L801.5,291.5L802.5,288.7L798.9,286.4L799.8,281.4L797.5,271.1L806.7,264.5L814.5,251.0L821.0,243.8L821.0,240.2L812.0,232.6L812.9,225.5L818.6,222.7L819.6,220.6L819.5,215.5L815.8,212.5L815.5,210.9L820.7,209.4L825.3,204.4L827.7,204.6Z"/>
+<path class="il" data-il="Yalova" d="M180.7,113.8L182.9,114.5L182.4,123.7L179.2,122.4L174.8,124.0L164.5,123.8L162.9,128.2L163.9,129.5L161.2,131.1L152.2,126.7L152.8,124.3L162.0,117.8L175.5,116.7L180.7,113.8Z"/>
+<path class="il" data-il="Yozgat" d="M456.6,147.8L458.4,149.6L464.5,149.7L470.1,156.8L484.2,157.4L486.5,166.7L485.5,169.9L489.3,173.1L490.4,178.0L492.9,180.5L492.8,184.2L494.4,185.3L490.2,197.4L479.6,208.8L474.3,216.5L471.8,218.2L462.6,219.2L463.1,225.2L451.9,231.6L442.5,229.4L440.5,222.3L435.9,216.4L437.0,208.8L431.3,205.3L431.0,202.4L419.2,194.3L418.5,192.7L419.6,189.1L416.1,185.7L414.1,181.5L405.2,181.2L397.5,176.2L396.9,169.5L398.3,168.4L407.3,167.3L412.6,163.5L431.5,163.3L436.3,159.4L443.4,160.8L449.0,156.6L448.5,148.0L456.6,147.8Z"/>
+<path class="il" data-il="Zonguldak" d="M302.5,52.8L318.0,75.9L315.4,76.0L307.8,81.6L305.9,87.4L305.8,91.5L275.5,88.8L270.8,83.1L274.1,77.7L273.8,73.6L274.7,73.4L273.3,72.0L273.7,70.4L283.9,65.7L296.6,55.6L302.5,52.8Z"/>
+<text class="il-lbl" x="470.4" y="333.7">Adana</text>
+<text class="il-lbl" x="595.3" y="312.4">Adıyaman</text>
+<text class="il-lbl" x="240.6" y="264.7">Afyon</text>
+<text class="il-lbl" x="829.3" y="196.0">Ağrı</text>
+<text class="il-lbl" x="385.9" y="268.2">Aksaray</text>
+<text class="il-lbl" x="475.5" y="118.1">Amasya</text>
+<text class="il-lbl" x="320.6" y="185.8">Ankara</text>
+<text class="il-lbl" x="253.2" y="383.5">Antalya</text>
+<text class="il-lbl" x="802.9" y="84.8">Ardahan</text>
+<text class="il-lbl" x="758.6" y="89.6">Artvin</text>
+<text class="il-lbl" x="113.2" y="318.8">Aydın</text>
+<text class="il-lbl" x="105.3" y="173.0">Balıkesir</text>
+<text class="il-lbl" x="323.6" y="54.7">Bartın</text>
+<text class="il-lbl" x="740.1" y="296.9">Batman</text>
+<text class="il-lbl" x="684.0" y="147.0">Bayburt</text>
+<text class="il-lbl" x="218.1" y="155.5">Bilecik</text>
+<text class="il-lbl" x="702.5" y="230.6">Bingöl</text>
+<text class="il-lbl" x="782.2" y="262.5">Bitlis</text>
+<text class="il-lbl" x="281.5" y="121.5">Bolu</text>
+<text class="il-lbl" x="216.0" y="342.0">Burdur</text>
+<text class="il-lbl" x="163.9" y="157.4">Bursa</text>
+<text class="il-lbl" x="52.1" y="154.0">Çanakkale</text>
+<text class="il-lbl" x="363.3" y="115.5">Çankırı</text>
+<text class="il-lbl" x="427.4" y="120.6">Çorum</text>
+<text class="il-lbl" x="176.1" y="322.6">Denizli</text>
+<text class="il-lbl" x="685.3" y="290.6">Diyarbakır</text>
+<text class="il-lbl" x="269.8" y="100.4">Düzce</text>
+<text class="il-lbl" x="47.1" y="71.7">Edirne</text>
+<text class="il-lbl" x="643.6" y="247.9">Elazığ</text>
+<text class="il-lbl" x="650.4" y="195.0">Erzincan</text>
+<text class="il-lbl" x="737.9" y="157.9">Erzurum</text>
+<text class="il-lbl" x="255.4" y="189.0">Eskişehir</text>
+<text class="il-lbl" x="545.0" y="360.7">Gaziantep</text>
+<text class="il-lbl" x="607.4" y="123.5">Giresun</text>
+<text class="il-lbl" x="648.5" y="140.3">Gümüşhane</text>
+<text class="il-lbl" x="864.5" y="342.7">Hakkari</text>
+<text class="il-lbl" x="498.4" y="406.0">Hatay</text>
+<text class="il-lbl" x="861.0" y="168.3">Iğdır</text>
+<text class="il-lbl" x="246.3" y="304.9">Isparta</text>
+<text class="il-lbl" x="161.0" y="78.6">İstanbul</text>
+<text class="il-lbl" x="87.9" y="255.5">İzmir</text>
+<text class="il-lbl" x="533.2" y="305.4">K.Maraş</text>
+<text class="il-lbl" x="328.7" y="78.9">Karabük</text>
+<text class="il-lbl" x="363.1" y="366.1">Karaman</text>
+<text class="il-lbl" x="809.3" y="123.8">Kars</text>
+<text class="il-lbl" x="377.6" y="61.9">Kastamonu</text>
+<text class="il-lbl" x="483.7" y="258.7">Kayseri</text>
+<text class="il-lbl" x="540.2" y="379.6">Kilis</text>
+<text class="il-lbl" x="381.2" y="182.2">Kırıkkale</text>
+<text class="il-lbl" x="93.5" y="45.7">Kırklareli</text>
+<text class="il-lbl" x="400.9" y="211.3">Kırşehir</text>
+<text class="il-lbl" x="200.3" y="101.0">Kocaeli</text>
+<text class="il-lbl" x="342.3" y="299.2">Konya</text>
+<text class="il-lbl" x="188.1" y="210.2">Kütahya</text>
+<text class="il-lbl" x="587.7" y="268.0">Malatya</text>
+<text class="il-lbl" x="119.7" y="248.7">Manisa</text>
+<text class="il-lbl" x="715.3" y="343.8">Mardin</text>
+<text class="il-lbl" x="385.9" y="387.0">Mersin</text>
+<text class="il-lbl" x="136.9" y="371.1">Muğla</text>
+<text class="il-lbl" x="763.7" y="231.6">Muş</text>
+<text class="il-lbl" x="423.9" y="237.5">Nevşehir</text>
+<text class="il-lbl" x="427.7" y="307.3">Niğde</text>
+<text class="il-lbl" x="553.1" y="111.2">Ordu</text>
+<text class="il-lbl" x="500.6" y="347.1">Osmaniye</text>
+<text class="il-lbl" x="713.2" y="98.8">Rize</text>
+<text class="il-lbl" x="231.1" y="109.9">Sakarya</text>
+<text class="il-lbl" x="488.1" y="72.3">Samsun</text>
+<text class="il-lbl" x="628.4" y="344.1">Ş.Urfa</text>
+<text class="il-lbl" x="775.9" y="303.6">Siirt</text>
+<text class="il-lbl" x="434.3" y="46.8">Sinop</text>
+<text class="il-lbl" x="794.3" y="334.3">Şırnak</text>
+<text class="il-lbl" x="547.1" y="194.6">Sivas</text>
+<text class="il-lbl" x="91.9" y="86.7">Tekirdağ</text>
+<text class="il-lbl" x="514.0" y="133.4">Tokat</text>
+<text class="il-lbl" x="664.1" y="106.6">Trabzon</text>
+<text class="il-lbl" x="655.7" y="221.5">Tunceli</text>
+<text class="il-lbl" x="179.0" y="263.4">Uşak</text>
+<text class="il-lbl" x="841.2" y="265.2">Van</text>
+<text class="il-lbl" x="167.5" y="122.4">Yalova</text>
+<text class="il-lbl" x="445.6" y="189.9">Yozgat</text>
+<text class="il-lbl" x="294.4" y="72.2">Zonguldak</text>
+        </svg>
+      </div>
+      <div id="map-legend">
+        <div class="leg"><div class="leg-d" style="background:#1e3050;border:1px solid #2d4a70"></div>Üye yok</div>
+        <div class="leg"><div class="leg-d" style="background:#1a4a8a;border:1px solid #3a6ac0"></div>Üyesi var</div>
+        <div class="leg"><div class="leg-d" style="background:var(--accent)"></div>Seçili il</div>
+      </div>
+    </div>
+  </section>
+
+  <aside id="sidebar">
+    <div id="il-card">
+      <h3 id="il-name">Türkiye</h3>
+      <div class="il-sub" id="il-sub">Haritadan bir il seçin</div>
+      <div class="il-stats">
+        <div class="il-st"><div class="il-st-n" id="il-u" style="color:var(--accent)">0</div><div class="il-st-l">Üye</div></div>
+        <div class="il-st"><div class="il-st-n" id="il-a" style="color:var(--gold)">0</div><div class="il-st-l">Aile Kolu</div></div>
+      </div>
+    </div>
+    <div id="mc">
+      <div id="mc-head"><h3 id="mc-title">Tüm Üyeler</h3><span id="mc-badge">0</span></div>
+      <div id="mc-sw"><span class="ms-i">🔍</span><input id="mc-s" type="text" placeholder="Üye ara..." autocomplete="off"/></div>
+      <div id="mc-list"><div id="es"><div class="es-i">🗺️</div><div>Haritadan bir il seçin<br>veya tüm üyeleri aramak için yazın.</div></div></div>
+    </div>
+  </aside>
+</div>
+
+<!-- KAYIT MODAL -->
+<div class="mo" id="rm">
+  <div class="mb">
+    <div class="mh"><div><h2>Üye Ol</h2><p>Tekelioğulları ailesine katıl</p></div><button class="mcls" onclick="closeM('rm')">✕</button></div>
+    <div class="mbody">
+      <div class="ftit">📷 Fotoğraf</div>
+      <div class="puw">
+        <div class="pph" id="pph">👤</div>
+        <img id="photo-prev" src="" alt=""/>
+        <div style="flex:1;display:flex;flex-direction:column;gap:8px">
+          <div class="fld"><label>Fotoğraf URL (opsiyonel)</label><input type="text" id="f-pu" placeholder="https://..."/></div>
+          <input type="file" id="f-pf" accept="image/*" style="font-size:12px;color:var(--text2)"/>
+        </div>
+      </div>
+      <hr class="fdiv"/>
+      <div class="ftit">👤 Kişisel Bilgiler</div>
+      <div class="fg">
+        <div class="fld"><label>Ad *</label><input type="text" id="f-ad" placeholder="Ahmet"/></div>
+        <div class="fld"><label>Soyad *</label><input type="text" id="f-soyad" placeholder="Tekelioğlu"/></div>
+        <div class="fld"><label>Yaşadığı İl *</label><select id="f-il"><option value="">— Seçin —</option><option value="Adana">Adana</option>
+<option value="Adıyaman">Adıyaman</option>
+<option value="Afyon">Afyon</option>
+<option value="Aksaray">Aksaray</option>
+<option value="Amasya">Amasya</option>
+<option value="Ankara">Ankara</option>
+<option value="Antalya">Antalya</option>
+<option value="Ardahan">Ardahan</option>
+<option value="Artvin">Artvin</option>
+<option value="Aydın">Aydın</option>
+<option value="Ağrı">Ağrı</option>
+<option value="Balıkesir">Balıkesir</option>
+<option value="Bartın">Bartın</option>
+<option value="Batman">Batman</option>
+<option value="Bayburt">Bayburt</option>
+<option value="Bilecik">Bilecik</option>
+<option value="Bingöl">Bingöl</option>
+<option value="Bitlis">Bitlis</option>
+<option value="Bolu">Bolu</option>
+<option value="Burdur">Burdur</option>
+<option value="Bursa">Bursa</option>
+<option value="Denizli">Denizli</option>
+<option value="Diyarbakır">Diyarbakır</option>
+<option value="Düzce">Düzce</option>
+<option value="Edirne">Edirne</option>
+<option value="Elazığ">Elazığ</option>
+<option value="Erzincan">Erzincan</option>
+<option value="Erzurum">Erzurum</option>
+<option value="Eskişehir">Eskişehir</option>
+<option value="Gaziantep">Gaziantep</option>
+<option value="Giresun">Giresun</option>
+<option value="Gümüşhane">Gümüşhane</option>
+<option value="Hakkari">Hakkari</option>
+<option value="Hatay">Hatay</option>
+<option value="Isparta">Isparta</option>
+<option value="Iğdır">Iğdır</option>
+<option value="İstanbul">İstanbul</option>
+<option value="İzmir">İzmir</option>
+<option value="Kahramanmaraş">Kahramanmaraş</option>
+<option value="Karabük">Karabük</option>
+<option value="Karaman">Karaman</option>
+<option value="Kars">Kars</option>
+<option value="Kastamonu">Kastamonu</option>
+<option value="Kayseri">Kayseri</option>
+<option value="Kilis">Kilis</option>
+<option value="Kocaeli">Kocaeli</option>
+<option value="Konya">Konya</option>
+<option value="Kütahya">Kütahya</option>
+<option value="Kırklareli">Kırklareli</option>
+<option value="Kırıkkale">Kırıkkale</option>
+<option value="Kırşehir">Kırşehir</option>
+<option value="Malatya">Malatya</option>
+<option value="Manisa">Manisa</option>
+<option value="Mardin">Mardin</option>
+<option value="Mersin">Mersin</option>
+<option value="Muğla">Muğla</option>
+<option value="Muş">Muş</option>
+<option value="Nevşehir">Nevşehir</option>
+<option value="Niğde">Niğde</option>
+<option value="Ordu">Ordu</option>
+<option value="Osmaniye">Osmaniye</option>
+<option value="Rize">Rize</option>
+<option value="Sakarya">Sakarya</option>
+<option value="Samsun">Samsun</option>
+<option value="Siirt">Siirt</option>
+<option value="Sinop">Sinop</option>
+<option value="Sivas">Sivas</option>
+<option value="Tekirdağ">Tekirdağ</option>
+<option value="Tokat">Tokat</option>
+<option value="Trabzon">Trabzon</option>
+<option value="Tunceli">Tunceli</option>
+<option value="Uşak">Uşak</option>
+<option value="Van">Van</option>
+<option value="Yalova">Yalova</option>
+<option value="Yozgat">Yozgat</option>
+<option value="Zonguldak">Zonguldak</option>
+<option value="Çanakkale">Çanakkale</option>
+<option value="Çankırı">Çankırı</option>
+<option value="Çorum">Çorum</option>
+<option value="Şanlıurfa">Şanlıurfa</option>
+<option value="Şırnak">Şırnak</option></select></div>
+        <div class="fld"><label>İlçe</label><input type="text" id="f-ilce" placeholder="İlçe adı"/></div>
+        <div class="fld"><label>Doğum Yılı</label><input type="number" id="f-dy" placeholder="1985" min="1920" max="2010"/></div>
+        <div class="fld"><label>Telefon</label><input type="tel" id="f-tel" placeholder="0532 xxx xx xx"/></div>
+      </div>
+      <hr class="fdiv"/>
+      <div class="ftit">👨‍👩‍👧‍👦 Aile Bilgileri</div>
+      <div class="fg">
+        <div class="fld s2"><label>Hangi Tekeli Ailesinden *</label><select id="f-aile"><option value="">— Seçin —</option></select></div>
+        <div class="fld s2"><label>veya Yeni Aile Kolu Gir</label><input type="text" id="f-ac" placeholder="Örn: Toroslar Kolu, Doğu Kolu..."/></div>
+      </div>
+      <hr class="fdiv"/>
+      <div class="ftit">💼 Mesleki Bilgiler</div>
+      <div class="fg">
+        <div class="fld"><label>Meslek</label><input type="text" id="f-mes" placeholder="Mühendis, Esnaf..."/></div>
+        <div class="fld"><label>Görev / Ünvan</label><input type="text" id="f-gov" placeholder="Müdür, Teknisyen..."/></div>
+        <div class="fld s2"><label>Çalıştığı İş Yeri</label><input type="text" id="f-isy" placeholder="Şirket, kurum, sektör..."/></div>
+        <div class="fld s2"><label>Hakkında</label><textarea id="f-bio" placeholder="Kendinizi kısaca tanıtın..."></textarea></div>
+      </div>
+      <div class="mfoot"><button class="bno" onclick="closeM('rm')">İptal</button><button class="bok" onclick="saveUye()">Üye Ol →</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- PROFİL MODAL -->
+<div class="mo" id="pm">
+  <div class="mb">
+    <button class="mcls" onclick="closeM('pm')" style="position:absolute;top:14px;right:14px">✕</button>
+    <div id="pmh">
+      <div id="pmav"></div>
+      <div id="pmi"><h3 id="pmname"></h3><div class="pmsub" id="pmil"></div><div id="pmbadge"></div></div>
+    </div>
+    <div id="pmb">
+      <div class="pmr"><div class="pmic">📍</div><div><div class="pml">Yaşadığı Yer</div><div class="pmv" id="pm-y"></div></div></div>
+      <div class="pmr"><div class="pmic">👨‍👩‍👧‍👦</div><div><div class="pml">Aile Kolu</div><div class="pmv" id="pm-a"></div></div></div>
+      <div class="pmr"><div class="pmic">💼</div><div><div class="pml">Meslek</div><div class="pmv" id="pm-m"></div></div></div>
+      <div class="pmr"><div class="pmic">🏢</div><div><div class="pml">İş Yeri / Görev</div><div class="pmv" id="pm-i"></div></div></div>
+      <div class="pmr"><div class="pmic">🎂</div><div><div class="pml">Doğum Yılı</div><div class="pmv" id="pm-dy"></div></div></div>
+      <div class="pmr" id="pm-br"><div class="pmic">💬</div><div><div class="pml">Hakkında</div><div class="pmv" id="pm-b"></div></div></div>
+    </div>
+  </div>
+</div>
+
+<div id="tip"><span id="tip-n"></span><span class="tc" id="tip-c"></span></div>
+<div id="toast"><span id="ti"></span><span id="tm"></span></div>
+
+<footer>
+  <div style="font-size:18px;font-weight:800;letter-spacing:-.02em;margin-bottom:6px">Tekelioğulları</div>
+  <div>Aile bağlarını harita üzerinde buluşturan platform</div>
+</footer>
+
+<script>
+
+// ── Supabase config ──────────────────────────────────────────────
+// !! Buraya kendi Supabase bilgilerini gir !!
+const SUPA_URL = 'https://zefrftoudcmhgqszvonh.supabase.co';
+const SUPA_KEY = 'sb_publishable_HCqnwrhgMoJjSJTrtboclg_4xwQH55L';
+
+async function dbFetch(method, path, body) {
+  const res = await fetch(SUPA_URL + '/rest/v1/' + path, {
+    method,
+    headers: {
+      'apikey': SUPA_KEY,
+      'Authorization': 'Bearer ' + SUPA_KEY,
+      'Content-Type': 'application/json',
+      'Prefer': method === 'POST' ? 'return=representation' : ''
+    },
+    body: body ? JSON.stringify(body) : undefined
+  });
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(err);
+  }
+  return method === 'DELETE' ? null : res.json();
+}
+
+// ── Sabit veriler ────────────────────────────────────────────────
+const AILE_KOLLARI = ["Merkez Kolu","Toroslar Kolu","Ege Kolu","Karadeniz Kolu","Doğu Kolu","İç Anadolu Kolu","Marmara Kolu","Güneydoğu Kolu"];
+const AILE_C = {"Merkez Kolu":"#e55a2b","Toroslar Kolu":"#3b82f6","Ege Kolu":"#22c55e","Karadeniz Kolu":"#14b8a6","Doğu Kolu":"#a78bfa","İç Anadolu Kolu":"#f97316","Marmara Kolu":"#d4a843","Güneydoğu Kolu":"#ec4899"};
+const aC = a => AILE_C[a] || '#8899b4';
+const inits = n => n.split(' ').map(w => w[0] || '').join('').slice(0, 2).toUpperCase();
+
+let members = [];
+let selIl = null;
+let rPh = null;
+let isLoading = false;
+
+// ── Supabase bağlantı durumu ──────────────────────────────────────
+const supaReady = SUPA_URL !== 'https://XXXXX.supabase.co';
+
+function setLoading(v) {
+  isLoading = v;
+  document.getElementById('loading-overlay').style.display = v ? 'flex' : 'none';
+}
+
+// ── Veri yükle ────────────────────────────────────────────────────
+async function loadMembers() {
+  if (!supaReady) {
+    members = JSON.parse(localStorage.getItem('tkl') || '[]');
+    afterLoad();
+    return;
+  }
+  try {
+    setLoading(true);
+    members = await dbFetch('GET', 'uyeler?select=*&order=created_at.desc');
+    afterLoad();
+  } catch(e) {
+    console.error(e);
+    showToast('⚠️', 'Supabase bağlantısı kurulamadı, yerel veri kullanılıyor.');
+    members = JSON.parse(localStorage.getItem('tkl') || '[]');
+    afterLoad();
+  } finally {
+    setLoading(false);
+  }
+}
+
+function afterLoad() {
+  updateStats();
+  updateColors();
+  renderList(members);
+  updateIlStats(members);
+  updateBanner();
+}
+
+// ── Supabase banner ───────────────────────────────────────────────
+function updateBanner() {
+  const b = document.getElementById('supa-banner');
+  if (supaReady) {
+    b.style.display = 'none';
+  } else {
+    b.style.display = 'flex';
+  }
+}
+
+// ── Aile select ───────────────────────────────────────────────────
+AILE_KOLLARI.forEach(a => {
+  const o = document.createElement('option');
+  o.value = a; o.textContent = a;
+  document.getElementById('f-aile').appendChild(o);
+});
+
+// ── Harita event ──────────────────────────────────────────────────
+document.querySelectorAll('.il').forEach(el => {
+  el.addEventListener('click', () => {
+    const il = el.getAttribute('data-il');
+    il === selIl ? clearSel() : selectIl(il);
+  });
+  el.addEventListener('mouseenter', e => showTip(e, el.getAttribute('data-il')));
+  el.addEventListener('mousemove', e => moveTip(e));
+  el.addEventListener('mouseleave', hideTip);
+});
+
+const tipEl = document.getElementById('tip');
+function showTip(e, il) {
+  const cnt = members.filter(m => m.il === il).length;
+  document.getElementById('tip-n').textContent = il;
+  document.getElementById('tip-c').textContent = cnt ? cnt + ' üye' : '';
+  tipEl.style.display = 'block';
+  moveTip(e);
+}
+function moveTip(e) { tipEl.style.left = (e.clientX + 14) + 'px'; tipEl.style.top = (e.clientY - 38) + 'px'; }
+function hideTip() { tipEl.style.display = 'none'; }
+
+// ── İl seç / temizle ──────────────────────────────────────────────
+function selectIl(il) {
+  selIl = il;
+  document.getElementById('sel-txt').innerHTML = '<strong>' + il + '</strong> ili seçildi';
+  document.getElementById('clr-btn').style.display = 'inline-flex';
+  updateColors();
+  const list = byIl(il);
+  renderList(list);
+  updateIlStats(list);
+  document.getElementById('il-name').textContent = il;
+  document.getElementById('mc-title').textContent = il + ' İli';
+  document.getElementById('main-wrap').scrollIntoView({ behavior: 'smooth' });
+}
+
+function clearSel() {
+  selIl = null;
+  document.getElementById('sel-txt').textContent = 'Haritadan bir il seçin';
+  document.getElementById('clr-btn').style.display = 'none';
+  document.getElementById('il-name').textContent = 'Türkiye';
+  document.getElementById('mc-title').textContent = 'Tüm Üyeler';
+  updateColors();
+  renderList(members);
+  updateIlStats(members);
+}
+
+function updateIlStats(list) {
+  const ailes = new Set(list.map(m => m.aile).filter(Boolean));
+  document.getElementById('il-sub').textContent = (selIl ? selIl + ': ' : '') + list.length + ' üye · ' + ailes.size + ' aile kolu';
+  document.getElementById('il-u').textContent = list.length;
+  document.getElementById('il-a').textContent = ailes.size;
+}
+
+function updateColors() {
+  const hm = new Set(members.map(m => m.il));
+  document.querySelectorAll('.il').forEach(el => {
+    const il = el.getAttribute('data-il');
+    el.classList.toggle('has-member', hm.has(il));
+    el.classList.toggle('selected', il === selIl);
+  });
+}
+
+const byIl = il => members.filter(m => m.il === il);
+
+// ── Üye listesi render ────────────────────────────────────────────
+function renderList(list) {
+  const el = document.getElementById('mc-list');
+  document.getElementById('mc-badge').textContent = list.length;
+  if (!list.length) {
+    el.innerHTML = '<div id="es"><div class="es-i">' + (selIl ? '🏙️' : '🗺️') + '</div><div>' + (selIl ? selIl + ' ilinde henüz üye yok.' : 'Henüz üye yok.') + '</div></div>';
+    return;
+  }
+  el.innerHTML = list.map(m => {
+    const col = aC(m.aile);
+    const av = m.foto
+      ? '<div class="mav"><img src="' + m.foto + '" onerror="this.parentElement.textContent=\'' + inits(m.ad + ' ' + m.soyad) + '\'" /></div>'
+      : '<div class="mav" style="background:' + col + '25;color:' + col + '">' + inits(m.ad + ' ' + m.soyad) + '</div>';
+    const kol = m.aile ? m.aile.replace(' Kolu', '') : '';
+    return '<div class="mi" onclick="showProfile(\'' + m.id + '\')">'
+      + av
+      + '<div style="min-width:0"><div class="mname">' + m.ad + ' ' + m.soyad + '</div>'
+      + '<div class="msub">' + (m.meslek || '') + (m.meslek && m.isyeri ? ' · ' : '') + (m.isyeri || '') + '</div></div>'
+      + (m.aile ? '<div class="mbadge" style="background:' + col + '20;color:' + col + '">' + kol + '</div>' : '')
+      + '</div>';
+  }).join('');
+}
+
+// ── Profil modal ──────────────────────────────────────────────────
+function showProfile(id) {
+  const m = members.find(x => x.id === id); if (!m) return;
+  const col = aC(m.aile);
+  const pav = document.getElementById('pmav');
+  pav.style.cssText = 'background:' + (m.foto ? 'transparent' : col + '25') + ';border:2.5px solid ' + col + '50';
+  pav.innerHTML = m.foto ? '<img src="' + m.foto + '" alt=""/>' : '<span style="color:' + col + '">' + inits(m.ad + ' ' + m.soyad) + '</span>';
+  document.getElementById('pmname').textContent = m.ad + ' ' + m.soyad;
+  document.getElementById('pmil').textContent = m.il + (m.ilce ? ' / ' + m.ilce : '');
+  const b = document.getElementById('pmbadge');
+  if (m.aile) { b.textContent = m.aile; b.style.cssText = 'background:' + col + '20;color:' + col + ';border:0.5px solid ' + col + '40;display:inline-block'; }
+  else b.style.display = 'none';
+  document.getElementById('pm-y').textContent = [m.ilce, m.il].filter(Boolean).join(', ') || '—';
+  document.getElementById('pm-a').textContent = m.aile || '—';
+  document.getElementById('pm-m').textContent = m.meslek || '—';
+  document.getElementById('pm-i').textContent = [m.isyeri, m.gorev].filter(Boolean).join(' — ') || '—';
+  const dogum_d = document.getElementById('pm-dy-r');
+  document.getElementById('pm-dy').textContent = m.dogum_yili || '—';
+  const br = document.getElementById('pm-br');
+  if (m.hakkinda) { document.getElementById('pm-b').textContent = m.hakkinda; br.style.display = 'flex'; }
+  else br.style.display = 'none';
+  openM('pm');
+}
+
+// ── Global istatistik ─────────────────────────────────────────────
+function updateStats() {
+  document.getElementById('st-u').textContent = members.length;
+  document.getElementById('st-i').textContent = new Set(members.map(m => m.il)).size;
+  document.getElementById('st-a').textContent = new Set(members.map(m => m.aile).filter(Boolean)).size;
+}
+
+// ── Fotoğraf upload ───────────────────────────────────────────────
+document.getElementById('f-pf').addEventListener('change', e => {
+  const f = e.target.files[0]; if (!f) return;
+  if (f.size > 2 * 1024 * 1024) { showToast('❌', 'Fotoğraf max 2MB olmalı.'); return; }
+  const r = new FileReader();
+  r.onload = ev => {
+    rPh = ev.target.result;
+    const p = document.getElementById('photo-prev');
+    p.src = rPh; p.style.display = 'block';
+    document.getElementById('pph').style.display = 'none';
+  };
+  r.readAsDataURL(f);
+});
+document.getElementById('f-pu').addEventListener('input', e => {
+  const p = document.getElementById('photo-prev');
+  if (e.target.value) { p.src = e.target.value; p.style.display = 'block'; document.getElementById('pph').style.display = 'none'; }
+  else { p.style.display = 'none'; document.getElementById('pph').style.display = 'flex'; }
+});
+
+// ── Kayıt ─────────────────────────────────────────────────────────
+async function saveUye() {
+  const ad = document.getElementById('f-ad').value.trim();
+  const soyad = document.getElementById('f-soyad').value.trim();
+  const il = document.getElementById('f-il').value;
+  if (!ad || !soyad || !il) { showToast('❌', 'Ad, Soyad ve İl zorunludur.'); return; }
+
+  const ac = document.getElementById('f-ac').value.trim();
+  const asel = document.getElementById('f-aile').value;
+  const foto = rPh || document.getElementById('f-pu').value.trim() || null;
+  rPh = null;
+
+  const uye = {
+    ad, soyad, il,
+    ilce: document.getElementById('f-ilce').value.trim() || null,
+    dogum_yili: document.getElementById('f-dy').value.trim() || null,
+    telefon: document.getElementById('f-tel').value.trim() || null,
+    aile: ac || asel || null,
+    meslek: document.getElementById('f-mes').value.trim() || null,
+    gorev: document.getElementById('f-gov').value.trim() || null,
+    isyeri: document.getElementById('f-isy').value.trim() || null,
+    hakkinda: document.getElementById('f-bio').value.trim() || null,
+    foto
+  };
+
+  if (supaReady) {
+    try {
+      setLoading(true);
+      const [saved] = await dbFetch('POST', 'uyeler', uye);
+      members.unshift(saved);
+      showToast('✅', ad + ' ' + soyad + ' başarıyla eklendi!');
+    } catch(e) {
+      console.error(e);
+      showToast('❌', 'Kayıt başarısız: ' + e.message);
+      return;
+    } finally {
+      setLoading(false);
+    }
+  } else {
+    uye.id = Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
+    uye.created_at = new Date().toISOString();
+    members.unshift(uye);
+    localStorage.setItem('tkl', JSON.stringify(members));
+    showToast('✅', ad + ' ' + soyad + ' eklendi! (Yerel kayıt)');
+  }
+
+  closeM('rm');
+  updateStats(); updateColors();
+  if (selIl === il) renderList(byIl(il));
+  else if (!selIl) renderList(members);
+  updateIlStats(selIl ? byIl(selIl) : members);
+  resetForm();
+}
+
+function resetForm() {
+  ['f-ad','f-soyad','f-ilce','f-dy','f-tel','f-ac','f-mes','f-gov','f-isy','f-bio','f-pu'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('f-il').value = '';
+  document.getElementById('f-aile').value = '';
+  document.getElementById('f-pf').value = '';
+  document.getElementById('photo-prev').style.display = 'none';
+  document.getElementById('pph').style.display = 'flex';
+}
+
+// ── Global arama ──────────────────────────────────────────────────
+const gsEl = document.getElementById('gs'), gsR = document.getElementById('gsr');
+gsEl.addEventListener('input', () => {
+  const q = gsEl.value.trim().toLowerCase();
+  if (!q) { gsR.style.display = 'none'; return; }
+  const f = members.filter(m =>
+    (m.ad + ' ' + m.soyad + ' ' + (m.aile || '') + ' ' + (m.il || '') + ' ' + (m.meslek || '')).toLowerCase().includes(q)
+  ).slice(0, 8);
+  if (!f.length) { gsR.style.display = 'none'; return; }
+  gsR.innerHTML = f.map(m => {
+    const col = aC(m.aile);
+    return '<div class="gsri" onclick="handleGS(\'' + m.id + '\',\'' + m.il + '\')">'
+      + '<div style="width:34px;height:34px;border-radius:50%;background:' + col + '25;color:' + col + ';display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0">' + inits(m.ad + ' ' + m.soyad) + '</div>'
+      + '<div><div style="font-size:14px;font-weight:600">' + m.ad + ' ' + m.soyad + '</div>'
+      + '<div style="font-size:12px;color:var(--text2)">' + m.il + (m.aile ? ' · ' + m.aile : '') + '</div></div></div>';
+  }).join('');
+  gsR.style.display = 'block';
+});
+document.addEventListener('click', e => { if (!e.target.closest('#gsw')) gsR.style.display = 'none'; });
+function handleGS(id, il) { gsEl.value = ''; gsR.style.display = 'none'; selectIl(il); setTimeout(() => showProfile(id), 200); }
+
+// ── Sidebar arama ──────────────────────────────────────────────────
+document.getElementById('mc-s').addEventListener('input', e => {
+  const q = e.target.value.trim().toLowerCase();
+  const base = selIl ? byIl(selIl) : members;
+  if (!q) { renderList(base); return; }
+  renderList(base.filter(m =>
+    (m.ad + ' ' + m.soyad + ' ' + (m.aile || '') + ' ' + (m.meslek || '') + ' ' + (m.il || '')).toLowerCase().includes(q)
+  ));
+});
+
+// ── Modal ─────────────────────────────────────────────────────────
+function openM(id) { document.getElementById(id).classList.add('open'); }
+function closeM(id) { document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.mo').forEach(el =>
+  el.addEventListener('click', e => { if (e.target === el) el.classList.remove('open'); })
+);
+
+// ── Toast ─────────────────────────────────────────────────────────
+let tt;
+function showToast(icon, msg) {
+  document.getElementById('ti').textContent = icon;
+  document.getElementById('tm').textContent = msg;
+  const t = document.getElementById('toast');
+  t.classList.add('show');
+  clearTimeout(tt);
+  tt = setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+// ── Başlat ────────────────────────────────────────────────────────
+loadMembers();
+</script>
+</body>
+</html>
